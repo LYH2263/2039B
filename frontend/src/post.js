@@ -3,6 +3,7 @@ import { renderHeader, requireLogin, getCurrentUser } from './header.js';
 import { generatePoster, downloadPoster, POSTER_THEMES } from './poster.js';
 import { tts, MIN_RATE, MAX_RATE } from './tts.js';
 import { initMentionAutocomplete } from './mention.js';
+import { renderLevelBadge, showPointsToast, escapeHtml } from './level_badge.js';
 import './styles.css';
 
 renderHeader();
@@ -53,6 +54,7 @@ function renderPost({ post, comments }) {
     document.title = `${post.title} - 极简论坛`;
     
     const currentUser = getCurrentUser();
+    const authorBadgeHtml = renderLevelBadge(post.author_level, 'sm');
     
     let html = `
         <div class="row justify-content-center">
@@ -67,9 +69,14 @@ function renderPost({ post, comments }) {
                 <div class="card mb-4">
                     <div class="card-body">
                         <h1 class="card-title mb-3">${escapeHtml(post.title)}</h1>
-                        <h6 class="card-subtitle mb-4 text-muted">
-                            作者: ${escapeHtml(post.author_name)} | 
-                            发布于: ${formatDate(post.created_at)}
+                        <h6 class="card-subtitle mb-4 text-muted d-flex align-items-center gap-2 flex-wrap">
+                            <span>作者:</span>
+                            <span class="author-name-with-badge">
+                                <span>${escapeHtml(post.author_name)}</span>
+                                ${authorBadgeHtml}
+                            </span>
+                            <span>|</span>
+                            <span>发布于: ${formatDate(post.created_at)}</span>
                         </h6>
                         <div class="d-flex gap-2 mb-4">
                             <button class="btn btn-outline-primary btn-sm" id="generatePosterBtn">
@@ -90,11 +97,15 @@ function renderPost({ post, comments }) {
         html += `<p class="text-muted mb-4">暂无评论，抢沙发！</p>`;
     } else {
         comments.forEach(comment => {
+            const commenterBadgeHtml = renderLevelBadge(comment.author_level, 'sm');
             html += `
                 <div class="card mb-3 bg-light">
                     <div class="card-body py-2">
-                        <div class="d-flex justify-content-between">
-                            <strong>${escapeHtml(comment.author_name)}</strong>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong class="author-name-with-badge">
+                                <span>${escapeHtml(comment.author_name)}</span>
+                                ${commenterBadgeHtml}
+                            </strong>
                             <small class="text-muted">${formatDate(comment.created_at)}</small>
                         </div>
                         <p class="mb-0 mt-1" style="white-space: pre-wrap;">${comment.content_rendered || escapeHtml(comment.content)}</p>
@@ -297,34 +308,28 @@ async function handleCommentSubmit(e) {
                 content
             })
         });
-        
+
+        if (data.commenter_points && data.commenter_points.points_change) {
+            showPointsToast(data.commenter_points.points_change, '评论');
+        }
+
+        let successMsg = '评论成功！';
         if (data.mentioned_users && data.mentioned_users.length > 0) {
             const mentionedNames = data.mentioned_users.map(u => '@' + u.nickname).join('、');
-            alertBox.innerHTML = `<div class="alert alert-success">评论成功！已提及 ${mentionedNames}</div>`;
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-        } else {
-            window.location.reload();
+            successMsg += ` 已提及 ${mentionedNames}`;
         }
+
+        alertBox.innerHTML = `<div class="alert alert-success">${successMsg}</div>`;
+        setTimeout(() => {
+            window.location.reload();
+        }, 1200);
     } catch (error) {
         alertBox.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
     }
 }
 
-function escapeHtml(text) {
-    if (!text) return '';
-    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
 function escapeHtmlForSpan(text) {
-    if (!text) return '';
-    return text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
+    return escapeHtml(text);
 }
 
 async function initTTS() {

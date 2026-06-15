@@ -1,5 +1,6 @@
 import { fetchApi, formatDate } from './config.js';
 import { renderHeader } from './header.js';
+import { renderLevelBadge, escapeHtml } from './level_badge.js';
 
 renderHeader('home');
 
@@ -29,6 +30,7 @@ function renderPosts({ posts, pagination }) {
     } else {
         html += `<div class="list-group">`;
         posts.forEach(post => {
+            const authorBadgeHtml = renderLevelBadge(post.author_level, 'sm');
             html += `
                 <a href="/post.html?id=${post.id}" class="list-group-item list-group-item-action p-3">
                     <div class="d-flex w-100 justify-content-between">
@@ -36,9 +38,14 @@ function renderPosts({ posts, pagination }) {
                         <small class="text-muted">${formatDate(post.created_at)}</small>
                     </div>
                     <p class="mb-1 text-truncate" style="max-width: 80%;">${escapeHtml(post.content.substring(0, 100))}...</p>
-                    <small class="text-muted">
-                        作者: ${escapeHtml(post.author_name)} | 
-                        评论: <span class="badge bg-secondary rounded-pill">${post.comment_count}</span>
+                    <small class="text-muted d-flex align-items-center gap-2">
+                        <span>作者:</span>
+                        <span class="author-name-with-badge">
+                            <span>${escapeHtml(post.author_name)}</span>
+                            ${authorBadgeHtml}
+                        </span>
+                        <span>|</span>
+                        <span>评论: <span class="badge bg-secondary rounded-pill">${post.comment_count}</span></span>
                     </small>
                 </a>
             `;
@@ -46,7 +53,6 @@ function renderPosts({ posts, pagination }) {
         html += `</div>`;
     }
 
-    // Pagination
     if (pagination.total_pages > 1) {
         html += `<nav class="mt-4"><ul class="pagination justify-content-center">`;
         if (pagination.current_page > 1) {
@@ -65,15 +71,6 @@ function renderPosts({ posts, pagination }) {
 
     html += `</div></div>`;
     app.innerHTML = html;
-}
-
-function escapeHtml(text) {
-    if (!text) return '';
-    return text.replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
 }
 
 const urlParams = new URLSearchParams(window.location.search);

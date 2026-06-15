@@ -29,6 +29,38 @@ define('DB_PASS', '19821230a');
 define('ADMIN_USER', 'admin');
 define('ADMIN_PASS', '123456');
 
+// Points system configuration
+// 积分系统配置（作为数据库规则的兜底默认值）
+define('POINT_RULES', [
+    'create_post' => [
+        'name' => '发布帖子',
+        'points' => 10,
+        'daily_limit' => 10,
+        'description' => '每发布一篇帖子获得积分'
+    ],
+    'receive_comment' => [
+        'name' => '帖子被评论',
+        'points' => 5,
+        'daily_limit' => 0,
+        'description' => '自己的帖子收到他人评论时获得积分'
+    ],
+    'create_comment' => [
+        'name' => '评论他人',
+        'points' => 2,
+        'daily_limit' => 50,
+        'description' => '每评论一篇他人帖子获得积分'
+    ]
+]);
+
+// Level configuration (等级配置，兜底用)
+define('LEVEL_BADGES', [
+    1 => ['name' => 'Lv1 新手', 'min_points' => 0, 'icon' => '🌱', 'color' => '#9CA3AF'],
+    2 => ['name' => 'Lv2 入门', 'min_points' => 50, 'icon' => '🌿', 'color' => '#10B981'],
+    3 => ['name' => 'Lv3 进阶', 'min_points' => 200, 'icon' => '🌳', 'color' => '#3B82F6'],
+    4 => ['name' => 'Lv4 高手', 'min_points' => 500, 'icon' => '🏆', 'color' => '#F59E0B'],
+    5 => ['name' => 'Lv5 资深', 'min_points' => 1000, 'icon' => '👑', 'color' => '#EF4444']
+]);
+
 // CORS Headers
 // 跨域资源共享配置
 // 核心逻辑：允许来自前端 (localhost:3000) 的请求携带凭证 (Cookie)

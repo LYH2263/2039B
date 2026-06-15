@@ -1,6 +1,7 @@
 import { fetchApi } from './config.js';
 import { renderHeader, requireLogin } from './header.js';
 import { initMentionAutocomplete } from './mention.js';
+import { showPointsToast } from './level_badge.js';
 
 renderHeader('create');
 
@@ -73,16 +74,21 @@ function initPostForm() {
                 method: 'POST',
                 body: JSON.stringify({ title, author, content })
             });
+
+            if (data.points_transaction && data.points_transaction.points_change) {
+                showPointsToast(data.points_transaction.points_change, '发帖');
+            }
             
+            let successMsg = '发布成功！';
             if (data.mentioned_users && data.mentioned_users.length > 0) {
                 const mentionedNames = data.mentioned_users.map(u => '@' + u.nickname).join('、');
-                alertBox.innerHTML = `<div class="alert alert-success">发布成功！已提及 ${mentionedNames}</div>`;
-                setTimeout(() => {
-                    window.location.href = `/post.html?id=${data.id}`;
-                }, 1000);
-            } else {
-                window.location.href = `/post.html?id=${data.id}`;
+                successMsg += ` 已提及 ${mentionedNames}`;
             }
+
+            alertBox.innerHTML = `<div class="alert alert-success">${successMsg}</div>`;
+            setTimeout(() => {
+                window.location.href = `/post.html?id=${data.id}`;
+            }, 1200);
         } catch (error) {
             alertBox.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
         }

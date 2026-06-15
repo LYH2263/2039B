@@ -1,5 +1,6 @@
 <?php
 require_once '../db.php';
+require_once '../point_helper.php';
 
 $conn = get_db_connection();
 
@@ -43,13 +44,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
-    $stmt = $conn->prepare("INSERT INTO users (username, email, password_hash, nickname) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("ssss", $username, $email, $password_hash, $nickname);
-    
-    if ($stmt->execute()) {
-        jsonResponse(['message' => '注册成功', 'user_id' => $conn->insert_id], 201);
-    } else {
-        jsonResponse(['error' => '注册失败，请重试'], 500);
+    $conn->begin_transaction();
+    try {
+        $stmt = $conn->prepare("INSERT INTO users (username, email, password_hash, nickname) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param("ssss", $username, $email, $password_hash, $nickname);
+        
+        if (!$stmt->execute()) {
+            throw new Exception('注册失败，请重试');
+        }
+
+        $user_id = $conn->insert_id;
+        ensure_user_points_record($conn, $user_id, $nickname);
+
+        $conn->commit();
+        jsonResponse(['message' => '注册成功', 'user_id' => $user_id], 201);
+    } catch (Exception $e) {
+        $conn->rollback();
+        jsonResponse(['error' => $e->getMessage()], 500);
     }
 }
 ?>

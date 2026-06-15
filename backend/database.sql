@@ -164,3 +164,84 @@ CREATE TABLE IF NOT EXISTS `notifications` (
     INDEX `idx_created_at` (`created_at`),
     INDEX `idx_source` (`source_type`, `source_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Point rules table (积分规则配置表)
+CREATE TABLE IF NOT EXISTS `point_rules` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `action_type` VARCHAR(50) NOT NULL UNIQUE COMMENT '动作类型：create_post-发帖，receive_comment-被评论，create_comment-评论他人',
+    `action_name` VARCHAR(100) NOT NULL COMMENT '动作名称',
+    `points` INT NOT NULL DEFAULT 0 COMMENT '奖励积分数',
+    `daily_limit` INT NOT NULL DEFAULT 0 COMMENT '每日上限次数，0表示不限',
+    `is_enabled` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用：0-禁用，1-启用',
+    `description` VARCHAR(500) NULL COMMENT '规则说明',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX `idx_action_type` (`action_type`),
+    INDEX `idx_is_enabled` (`is_enabled`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Level badges table (等级徽章配置表)
+CREATE TABLE IF NOT EXISTS `level_badges` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `level` INT NOT NULL UNIQUE COMMENT '等级：1-5',
+    `level_name` VARCHAR(50) NOT NULL COMMENT '等级名称：Lv1新手，Lv2入门，Lv3进阶，Lv4高手，Lv5资深',
+    `min_points` INT NOT NULL COMMENT '所需最低积分',
+    `badge_icon` VARCHAR(255) NULL COMMENT '徽章图标（可存emoji或图标路径）',
+    `badge_color` VARCHAR(20) NULL COMMENT '徽章颜色',
+    `description` VARCHAR(500) NULL COMMENT '等级说明',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    INDEX `idx_level` (`level`),
+    INDEX `idx_min_points` (`min_points`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- User points table (用户积分表)
+CREATE TABLE IF NOT EXISTS `user_points` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL UNIQUE COMMENT '用户ID',
+    `nickname` VARCHAR(50) NOT NULL COMMENT '用户昵称（冗余）',
+    `total_points` INT NOT NULL DEFAULT 0 COMMENT '累计总积分',
+    `current_points` INT NOT NULL DEFAULT 0 COMMENT '当前可用积分（预留，暂时与total一致）',
+    `level` INT NOT NULL DEFAULT 1 COMMENT '当前等级',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    INDEX `idx_user_id` (`user_id`),
+    INDEX `idx_total_points` (`total_points`),
+    INDEX `idx_level` (`level`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Point transactions table (积分流水表)
+CREATE TABLE IF NOT EXISTS `point_transactions` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL COMMENT '用户ID',
+    `action_type` VARCHAR(50) NOT NULL COMMENT '动作类型（关联point_rules）',
+    `points_change` INT NOT NULL COMMENT '积分变动值（正数为增加，负数为扣除）',
+    `balance_after` INT NOT NULL COMMENT '变动后余额',
+    `source_type` VARCHAR(20) NULL COMMENT '来源类型：post-帖子，comment-评论',
+    `source_id` INT NULL COMMENT '来源ID（帖子ID或评论ID）',
+    `related_user_id` INT NULL COMMENT '关联用户ID（如评论者、被评论者）',
+    `related_user_nickname` VARCHAR(50) NULL COMMENT '关联用户昵称',
+    `description` VARCHAR(500) NULL COMMENT '变动说明',
+    `idempotency_key` VARCHAR(100) NOT NULL UNIQUE COMMENT '幂等键，防重复结算：{user_id}_{action_type}_{source_type}_{source_id}',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    INDEX `idx_user_id` (`user_id`),
+    INDEX `idx_user_created` (`user_id`, `created_at`),
+    INDEX `idx_action_type` (`action_type`),
+    INDEX `idx_source` (`source_type`, `source_id`),
+    UNIQUE KEY `uk_idempotency_key` (`idempotency_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Insert default point rules (插入默认积分规则)
+INSERT IGNORE INTO `point_rules` (`action_type`, `action_name`, `points`, `daily_limit`, `is_enabled`, `description`) VALUES
+('create_post', '发布帖子', 10, 10, 1, '每发布一篇帖子获得积分，每日上限10次'),
+('receive_comment', '帖子被评论', 5, 0, 1, '自己的帖子收到他人评论时获得积分'),
+('create_comment', '评论他人', 2, 50, 1, '每评论一篇他人帖子获得积分，每日上限50次');
+
+-- Insert default level badges (插入默认等级徽章)
+INSERT IGNORE INTO `level_badges` (`level`, `level_name`, `min_points`, `badge_icon`, `badge_color`, `description`) VALUES
+(1, 'Lv1 新手', 0, '🌱', '#9CA3AF', '初入论坛，欢迎加入！'),
+(2, 'Lv2 入门', 50, '🌿', '#10B981', '开始活跃，渐入佳境。'),
+(3, 'Lv3 进阶', 200, '🌳', '#3B82F6', '持续贡献，社区中坚。'),
+(4, 'Lv4 高手', 500, '🏆', '#F59E0B', '经验丰富，社区达人。'),
+(5, 'Lv5 资深', 1000, '👑', '#EF4444', '殿堂级用户，社区瑰宝。');

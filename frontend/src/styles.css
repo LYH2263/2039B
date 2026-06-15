@@ -502,3 +502,513 @@ textarea::placeholder {
         max-width: calc(100vw - 30px) !important;
     }
 }
+
+/* ==================== 积分与等级徽章系统 ==================== */
+
+/* 等级徽章基础样式 */
+.level-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+    vertical-align: middle;
+    transition: all 0.2s ease;
+    cursor: default;
+    white-space: nowrap;
+}
+
+.level-badge:hover {
+    transform: scale(1.05);
+    filter: brightness(1.1);
+}
+
+.level-badge-icon {
+    font-size: 0.875rem;
+}
+
+.level-badge-sm {
+    padding: 1px 6px;
+    font-size: 0.6875rem;
+    border-radius: 10px;
+}
+
+.level-badge-lg {
+    padding: 4px 12px;
+    font-size: 0.875rem;
+    border-radius: 16px;
+}
+
+/* 昵称旁的徽章间距 */
+.author-name-with-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+/* 积分页面样式 */
+.points-page-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.points-overview-card {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #6366f1 50%, #8b5cf6 100%);
+    color: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 10px 40px rgba(79, 70, 229, 0.3);
+}
+
+.points-display {
+    font-size: 3.5rem;
+    font-weight: 700;
+    line-height: 1;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.points-label {
+    font-size: 0.875rem;
+    opacity: 0.8;
+    margin-top: 0.25rem;
+}
+
+.current-level-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.current-level-badge {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.current-level-badge .level-badge-icon {
+    font-size: 1.5rem;
+}
+
+.current-level-text {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.level-progress-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.next-level-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.next-level-name {
+    opacity: 0.9;
+}
+
+.points-needed {
+    font-weight: 600;
+}
+
+.progress-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+}
+
+.max-level-banner {
+    background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+    color: #78350f;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    font-weight: 600;
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+/* 等级徽章展示墙 */
+.level-badges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.level-badge-card {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.level-badge-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+
+.level-badge-card.achieved {
+    border-color: var(--primary-color);
+    background: linear-gradient(135deg, #f0f9ff 0%, #f5f3ff 100%);
+}
+
+.level-badge-card.locked {
+    opacity: 0.5;
+    filter: grayscale(0.7);
+}
+
+.level-badge-card .badge-icon-large {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.level-badge-card .badge-name {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--text-main);
+}
+
+.level-badge-card .badge-points {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+.level-badge-card .badge-status {
+    font-size: 0.6875rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.75rem;
+    margin-top: 0.5rem;
+    display: inline-block;
+}
+
+.level-badge-card.achieved .badge-status {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.level-badge-card.locked .badge-status {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+/* 积分流水列表 */
+.transactions-section {
+    background: white;
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+}
+
+.transactions-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.transactions-title {
+    font-weight: 600;
+    font-size: 1.125rem;
+    margin: 0;
+}
+
+.transaction-item {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.15s ease;
+}
+
+.transaction-item:last-child {
+    border-bottom: none;
+}
+
+.transaction-item:hover {
+    background-color: #fafafa;
+}
+
+.transaction-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.transaction-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.transaction-icon.create_post {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.transaction-icon.create_comment {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.transaction-icon.receive_comment {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.transaction-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.transaction-description {
+    font-weight: 500;
+    color: var(--text-main);
+    font-size: 0.875rem;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.transaction-time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.125rem;
+}
+
+.transaction-right {
+    text-align: right;
+    flex-shrink: 0;
+    margin-left: 1rem;
+}
+
+.transaction-points {
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: #16a34a;
+}
+
+.transaction-points.negative {
+    color: #dc2626;
+}
+
+.transaction-balance {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.125rem;
+}
+
+.empty-transactions {
+    padding: 3rem 1.5rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.empty-transactions-icon {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.3;
+}
+
+/* 积分规则说明 */
+.rules-section {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 1.5rem;
+}
+
+.rules-title {
+    font-weight: 600;
+    font-size: 1.125rem;
+    margin-bottom: 1rem;
+}
+
+.rule-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.rule-item:last-child {
+    border-bottom: none;
+}
+
+.rule-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.rule-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+}
+
+.rule-name {
+    font-weight: 500;
+}
+
+.rule-desc {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.rule-points {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 1.125rem;
+}
+
+/* 分页 */
+.pagination-container {
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    border-top: 1px solid #f3f4f6;
+}
+
+.pagination-btn {
+    padding: 0.375rem 0.75rem;
+    border: 1px solid #d1d5db;
+    background: white;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 0.875rem;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: #f3f4f6;
+    border-color: var(--primary-color);
+}
+
+.pagination-btn.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 积分变动提示 */
+.points-toast {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 20px rgba(34, 197, 94, 0.4);
+    z-index: 2000;
+    animation: pointsToastSlide 0.3s ease-out;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+}
+
+@keyframes pointsToastSlide {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.points-toast.fade-out {
+    animation: pointsToastFade 0.3s ease-out forwards;
+}
+
+@keyframes pointsToastFade {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+/* 响应式 */
+@media (max-width: 576px) {
+    .points-overview-card {
+        padding: 1.5rem;
+        margin: 0 -0.75rem 1.5rem;
+        border-radius: 0;
+    }
+
+    .points-display {
+        font-size: 2.5rem;
+    }
+
+    .level-badges-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+
+    .transaction-item {
+        padding: 0.75rem 1rem;
+    }
+
+    .transactions-header {
+        padding: 0.75rem 1rem;
+    }
+}

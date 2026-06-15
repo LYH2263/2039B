@@ -17,6 +17,7 @@
 
 require_once '../db.php';
 require_once '../mention_helper.php';
+require_once '../point_helper.php';
 
 $conn = get_db_connection();
 
@@ -33,7 +34,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $total_posts = $total_row['count'];
     $total_pages = ceil($total_posts / $posts_per_page);
 
-    // 核心逻辑：查询当前页帖子数据（包含评论数统计子查询）
     $sql = "SELECT p.*, (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count 
             FROM posts p 
             ORDER BY p.created_at DESC 
@@ -44,8 +44,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $result = $stmt->get_result();
     
     $posts = [];
+    $author_nicknames = [];
     while($row = $result->fetch_assoc()) {
         $posts[] = $row;
+        $author_nicknames[] = $row['author_name'];
+    }
+
+    $author_levels = [];
+    if (!empty($author_nicknames)) {
+        $author_nicknames = array_unique($author_nicknames);
+        $placeholders = implode(',', array_fill(0, count($author_nicknames), '?'));
+        $level_sql = "SELECT u.nickname, up.level, up.total_points, lb.badge_icon, lb.badge_color, lb.level_name
+                      FROM users u
+                      LEFT JOIN user_points up ON u.id = up.user_id
+                      LEFT JOIN level_badges lb ON COALESCE(up.level, 1) = lb.level
+                      WHERE u.nickname IN ($placeholders)";
+        $level_stmt = $conn->prepare($level_sql);
+        $types = str_repeat('s', count($author_nicknames));
+        $level_stmt->bind_param($types, ...$author_nicknames);
+        $level_stmt->execute();
+        $level_result = $level_stmt->get_result();
+        while ($lr = $level_result->fetch_assoc()) {
+            $author_levels[$lr['nickname']] = [
+                'level' => (int)$lr['level'],
+                'level_name' => $lr['level_name'],
+                'badge_icon' => $lr['badge_icon'],
+                'badge_color' => $lr['badge_color'],
+                'total_points' => (int)$lr['total_points']
+            ];
+        }
+    }
+
+    foreach ($posts as &$post) {
+        $post['author_level'] = $author_levels[$post['author_name']] ?? null;
     }
 
     jsonResponse([
@@ -95,12 +126,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $title
         );
 
+        $points_transaction = null;
+        if ($current_user) {
+            $points_transaction = add_points(
+                $conn,
+                $current_user['id'],
+                $current_user['nickname'],
+                'create_post',
+                'post',
+                $post_id,
+                null,
+                null,
+                '发布帖子《' . mb_substr($title, 0, 20) . (mb_strlen($title) > 20 ? '...' : '') . '》'
+            );
+        }
+
         $conn->commit();
 
         jsonResponse([
             'message' => 'Post created',
             'id' => $post_id,
-            'mentioned_users' => $mentioned_users
+            'mentioned_users' => $mentioned_users,
+            'points_transaction' => $points_transaction
         ], 201);
     } catch (Exception $e) {
         $conn->rollback();

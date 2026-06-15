@@ -15,6 +15,7 @@
 
 require_once '../db.php';
 require_once '../mention_helper.php';
+require_once '../point_helper.php';
 
 $conn = get_db_connection();
 
@@ -44,12 +45,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $comment_id = $conn->insert_id;
 
-        $post_stmt = $conn->prepare("SELECT title FROM posts WHERE id = ?");
+        $post_stmt = $conn->prepare("SELECT title, author_name FROM posts WHERE id = ?");
         $post_stmt->bind_param("i", $post_id);
         $post_stmt->execute();
         $post_result = $post_stmt->get_result();
         $post_row = $post_result->fetch_assoc();
         $post_title = $post_row ? $post_row['title'] : '';
+        $post_author_name = $post_row ? $post_row['author_name'] : '';
 
         $mentioned_users = save_mentions(
             $conn,
@@ -62,12 +64,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $post_title
         );
 
+        $commenter_points = null;
+        $post_author_points = null;
+
+        if ($current_user) {
+            $commenter_points = add_points(
+                $conn,
+                $current_user['id'],
+                $current_user['nickname'],
+                'create_comment',
+                'comment',
+                $comment_id,
+                null,
+                $post_author_name,
+                '评论帖子《' . mb_substr($post_title, 0, 20) . (mb_strlen($post_title) > 20 ? '...' : '') . '》'
+            );
+
+            $post_author_stmt = $conn->prepare("SELECT id, nickname FROM users WHERE nickname = ?");
+            $post_author_stmt->bind_param("s", $post_author_name);
+            $post_author_stmt->execute();
+            $post_author_result = $post_author_stmt->get_result();
+            $post_author_row = $post_author_result->fetch_assoc();
+
+            if ($post_author_row && $post_author_row['id'] != $current_user['id']) {
+                $post_author_points = add_points(
+                    $conn,
+                    $post_author_row['id'],
+                    $post_author_row['nickname'],
+                    'receive_comment',
+                    'comment',
+                    $comment_id,
+                    $current_user['id'],
+                    $current_user['nickname'],
+                    '帖子《' . mb_substr($post_title, 0, 20) . (mb_strlen($post_title) > 20 ? '...' : '') . '》被 ' . $current_user['nickname'] . ' 评论'
+                );
+            }
+        }
+
         $conn->commit();
 
         jsonResponse([
             'message' => 'Comment created',
             'id' => $comment_id,
-            'mentioned_users' => $mentioned_users
+            'mentioned_users' => $mentioned_users,
+            'commenter_points' => $commenter_points,
+            'post_author_points' => $post_author_points
         ], 201);
     } catch (Exception $e) {
         $conn->rollback();

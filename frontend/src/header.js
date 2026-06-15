@@ -1,4 +1,5 @@
 import { fetchApi } from './config.js';
+import { renderLevelBadge, escapeHtml } from './level_badge.js';
 
 let currentUser = null;
 
@@ -22,7 +23,20 @@ export async function renderHeader(activeLink = '') {
     
     let userMenu = '';
     if (currentUser) {
+        const userLevelInfo = currentUser.level ? {
+            level: currentUser.level,
+            level_name: currentUser.level_name,
+            badge_icon: currentUser.badge_icon,
+            badge_color: currentUser.badge_color
+        } : null;
+        const userBadgeHtml = renderLevelBadge(userLevelInfo, 'sm');
+
         userMenu = `
+            <li class="nav-item">
+                <a class="nav-link ${activeLink === 'points' ? 'active' : ''}" href="/points.html">
+                    <i class="bi bi-star me-1"></i>积分
+                </a>
+            </li>
             <li class="nav-item">
                 <a class="nav-link position-relative" href="/notifications.html">
                     <i class="bi bi-bell me-1"></i>提醒
@@ -42,10 +56,21 @@ export async function renderHeader(activeLink = '') {
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
                     <i class="bi bi-person-circle me-1"></i>${escapeHtml(currentUser.nickname)}
+                    ${userBadgeHtml}
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><span class="dropdown-item-text text-muted">@${escapeHtml(currentUser.username)}</span></li>
+                    <li>
+                        <span class="dropdown-item-text">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <strong>${escapeHtml(currentUser.nickname)}</strong>
+                                ${userBadgeHtml}
+                            </div>
+                            <small class="text-muted">@${escapeHtml(currentUser.username)}</small>
+                            ${currentUser.total_points !== undefined ? `<div class="mt-1 text-primary" style="font-size: 0.875rem;"><i class="bi bi-star-fill me-1"></i>${currentUser.total_points} 积分</div>` : ''}
+                        </span>
+                    </li>
                     <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="/points.html"><i class="bi bi-star me-2"></i>我的积分</a></li>
                     <li><a class="dropdown-item" href="/notifications.html"><i class="bi bi-bell me-2"></i>我的提醒</a></li>
                     <li><a class="dropdown-item" href="/messages.html"><i class="bi bi-chat-dots me-2"></i>我的私信</a></li>
                     <li><a class="dropdown-item" href="/stories.html"><i class="bi bi-book me-2"></i>接龙故事</a></li>
@@ -167,13 +192,4 @@ export function requireLogin() {
         return false;
     }
     return true;
-}
-
-function escapeHtml(text) {
-    if (!text) return '';
-    return text.replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
 }
