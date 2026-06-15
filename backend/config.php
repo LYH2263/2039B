@@ -76,4 +76,33 @@ function check_admin_auth() {
         jsonResponse(['error' => 'Unauthorized'], 401);
     }
 }
+
+/**
+ * 辅助函数：检查普通用户登录状态
+ * 
+ * 逻辑：检查 $_SESSION['user_id'] 是否存在
+ * 异常处理：若未登录，直接返回 401 Unauthorized JSON 响应
+ */
+function check_user_auth() {
+    if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
+        jsonResponse(['error' => '请先登录'], 401);
+    }
+}
+
+/**
+ * 辅助函数：获取当前登录用户信息
+ * 
+ * @return array|null 用户信息数组，未登录返回 null
+ */
+function get_current_user() {
+    if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
+        return null;
+    }
+    return [
+        'id' => $_SESSION['user_id'],
+        'username' => $_SESSION['username'] ?? '',
+        'nickname' => $_SESSION['nickname'] ?? '',
+        'email' => $_SESSION['email'] ?? ''
+    ];
+}
 ?>

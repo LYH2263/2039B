@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创建接龙故事 - 极简论坛</title>
+    <link href="https://cdn.osyb.cn/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.osyb.cn/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>body { background-color: #f8f9fa; }</style>
+</head>
+<body>
+    <div class="container" id="app">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h4 class="mb-0"><i class="bi bi-plus-circle me-2"></i>创建接龙故事</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <form id="createForm">
+                            <div class="mb-3">
+                                <label class="form-label">故事标题 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="title" placeholder="给你的接龙故事起个吸引人的标题" maxlength="255" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">每段字数上限 <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="maxWords" value="100" min="10" max="2000" required>
+                                    <span class="input-group-text">字/段</span>
+                                </div>
+                                <div class="form-text">设置每位续写者最多能写的字数，范围 10-2000 字</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">开头段落 <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="openingParagraph" rows="6" placeholder="写下故事的开头，吸引大家来续写..." required></textarea>
+                                <div class="d-flex justify-content-between mt-1">
+                                    <small class="form-text" id="wordCount">当前字数：0 / <span id="maxWordsDisplay">100</span></small>
+                                    <small class="text-muted" id="wordWarning"></small>
+                                </div>
+                            </div>
+                            <div id="errorMsg" class="alert alert-danger d-none"></div>
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="/stories.html" class="btn btn-outline-secondary">取消</a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle me-1"></i>创建接龙
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.osyb.cn/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="/src/create_story.js"></script>
+</body>
+</html>

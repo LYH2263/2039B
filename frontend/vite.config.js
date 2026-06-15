@@ -13,6 +13,11 @@ export default defineConfig({
         admin_posts: resolve(__dirname, 'admin/posts.html'),
         admin_comments: resolve(__dirname, 'admin/comments.html'),
         admin_edit: resolve(__dirname, 'admin/edit_post.html'),
+        user_login: resolve(__dirname, 'login.html'),
+        register: resolve(__dirname, 'register.html'),
+        stories: resolve(__dirname, 'stories.html'),
+        create_story: resolve(__dirname, 'create_story.html'),
+        story_detail: resolve(__dirname, 'story_detail.html'),
       }
     }
   }
