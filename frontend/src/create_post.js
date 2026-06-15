@@ -1,5 +1,6 @@
 import { fetchApi } from './config.js';
-import { renderHeader } from './header.js';
+import { renderHeader, requireLogin } from './header.js';
+import { initMentionAutocomplete } from './mention.js';
 
 renderHeader('create');
 
@@ -41,20 +42,51 @@ app.innerHTML = `
 </div>
 `;
 
-document.getElementById('post-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const title = document.getElementById('title').value.trim();
-    const author = document.getElementById('author').value.trim();
-    const content = document.getElementById('content').value.trim();
-    const alertBox = document.getElementById('alert-box');
+let mentionAutocomplete = null;
 
-    try {
-        const data = await fetchApi('/posts.php', {
-            method: 'POST',
-            body: JSON.stringify({ title, author, content })
-        });
-        window.location.href = `/post.html?id=${data.id}`;
-    } catch (error) {
-        alertBox.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+function initPostForm() {
+    const contentTextarea = document.getElementById('content');
+    if (contentTextarea) {
+        mentionAutocomplete = initMentionAutocomplete(contentTextarea);
     }
-});
+    
+    const authorInput = document.getElementById('author');
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    if (currentUser) {
+        authorInput.value = currentUser.nickname;
+        authorInput.readOnly = true;
+        authorInput.classList.add('bg-light');
+    }
+
+    document.getElementById('post-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!requireLogin()) return;
+        
+        const title = document.getElementById('title').value.trim();
+        const author = document.getElementById('author').value.trim();
+        const content = document.getElementById('content').value.trim();
+        const alertBox = document.getElementById('alert-box');
+
+        try {
+            const data = await fetchApi('/posts.php', {
+                method: 'POST',
+                body: JSON.stringify({ title, author, content })
+            });
+            
+            if (data.mentioned_users && data.mentioned_users.length > 0) {
+                const mentionedNames = data.mentioned_users.map(u => '@' + u.nickname).join('、');
+                alertBox.innerHTML = `<div class="alert alert-success">发布成功！已提及 ${mentionedNames}</div>`;
+                setTimeout(() => {
+                    window.location.href = `/post.html?id=${data.id}`;
+                }, 1000);
+            } else {
+                window.location.href = `/post.html?id=${data.id}`;
+            }
+        } catch (error) {
+            alertBox.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+        }
+    });
+}
+
+initPostForm();

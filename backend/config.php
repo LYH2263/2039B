@@ -94,7 +94,7 @@ function check_user_auth() {
  * 
  * @return array|null 用户信息数组，未登录返回 null
  */
-function get_current_user() {
+function get_current_logged_user() {
     if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
         return null;
     }

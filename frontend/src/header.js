@@ -24,9 +24,17 @@ export async function renderHeader(activeLink = '') {
     if (currentUser) {
         userMenu = `
             <li class="nav-item">
+                <a class="nav-link position-relative" href="/notifications.html">
+                    <i class="bi bi-bell me-1"></i>提醒
+                    <span class="position-absolute top-50 start-100 translate-middle badge rounded-pill bg-danger d-none" id="navNotificationBadge" style="font-size: 0.65rem; transform: translate(-20%, -50%) !important;">
+                        0
+                    </span>
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link position-relative" href="/messages.html">
                     <i class="bi bi-chat-dots me-1"></i>私信
-                    <span class="position-absolute top-50 start-100 translate-middle badge rounded-pill bg-danger d-none" id="navUnreadBadge" style="font-size: 0.65rem; transform: translate(-20%, -50%) !important;">
+                    <span class="position-absolute top-50 start-100 translate-middle badge rounded-pill bg-danger d-none" id="navMessageBadge" style="font-size: 0.65rem; transform: translate(-20%, -50%) !important;">
                         0
                     </span>
                 </a>
@@ -38,6 +46,7 @@ export async function renderHeader(activeLink = '') {
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><span class="dropdown-item-text text-muted">@${escapeHtml(currentUser.username)}</span></li>
                     <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="/notifications.html"><i class="bi bi-bell me-2"></i>我的提醒</a></li>
                     <li><a class="dropdown-item" href="/messages.html"><i class="bi bi-chat-dots me-2"></i>我的私信</a></li>
                     <li><a class="dropdown-item" href="/stories.html"><i class="bi bi-book me-2"></i>接龙故事</a></li>
                     <li><hr class="dropdown-divider"></li>
@@ -94,23 +103,51 @@ export async function renderHeader(activeLink = '') {
 export async function loadUnreadCount() {
     try {
         const data = await fetchApi('/unread_count.php');
-        const count = data.data?.unread_count || 0;
-        updateNavUnreadBadge(count);
+        const messageUnread = data.data?.message_unread || 0;
+        const notificationUnread = data.data?.notification_unread || 0;
+        const totalUnread = data.data?.total_unread || 0;
+        updateNavUnreadBadges(messageUnread, notificationUnread, totalUnread);
+        return { messageUnread, notificationUnread, totalUnread };
     } catch (e) {
         console.warn('获取未读消息数失败', e);
+        return { messageUnread: 0, notificationUnread: 0, totalUnread: 0 };
+    }
+}
+
+export function updateNavUnreadBadges(messageUnread, notificationUnread, totalUnread) {
+    const messageBadge = document.getElementById('navMessageBadge');
+    if (messageBadge) {
+        if (messageUnread > 0) {
+            messageBadge.textContent = messageUnread > 99 ? '99+' : messageUnread;
+            messageBadge.classList.remove('d-none');
+        } else {
+            messageBadge.classList.add('d-none');
+        }
+    }
+    
+    const notificationBadge = document.getElementById('navNotificationBadge');
+    if (notificationBadge) {
+        if (notificationUnread > 0) {
+            notificationBadge.textContent = notificationUnread > 99 ? '99+' : notificationUnread;
+            notificationBadge.classList.remove('d-none');
+        } else {
+            notificationBadge.classList.add('d-none');
+        }
+    }
+    
+    const totalBadge = document.getElementById('navUnreadBadge');
+    if (totalBadge) {
+        if (totalUnread > 0) {
+            totalBadge.textContent = totalUnread > 99 ? '99+' : totalUnread;
+            totalBadge.classList.remove('d-none');
+        } else {
+            totalBadge.classList.add('d-none');
+        }
     }
 }
 
 export function updateNavUnreadBadge(count) {
-    const badge = document.getElementById('navUnreadBadge');
-    if (badge) {
-        if (count > 0) {
-            badge.textContent = count > 99 ? '99+' : count;
-            badge.classList.remove('d-none');
-        } else {
-            badge.classList.add('d-none');
-        }
-    }
+    updateNavUnreadBadges(0, 0, count);
 }
 
 export function getCurrentUser() {

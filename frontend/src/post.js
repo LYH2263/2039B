@@ -1,7 +1,8 @@
 import { fetchApi, formatDate } from './config.js';
-import { renderHeader } from './header.js';
+import { renderHeader, requireLogin, getCurrentUser } from './header.js';
 import { generatePoster, downloadPoster, POSTER_THEMES } from './poster.js';
 import { tts, MIN_RATE, MAX_RATE } from './tts.js';
+import { initMentionAutocomplete } from './mention.js';
 import './styles.css';
 
 renderHeader();
@@ -13,6 +14,7 @@ const postId = urlParams.get('id');
 let currentPost = null;
 let currentTheme = 'indigo';
 let currentPosterCanvas = null;
+let mentionAutocomplete = null;
 
 let ttsSupported = false;
 let ttsInitialized = false;
@@ -50,6 +52,8 @@ async function loadPost(id) {
 function renderPost({ post, comments }) {
     document.title = `${post.title} - 极简论坛`;
     
+    const currentUser = getCurrentUser();
+    
     let html = `
         <div class="row justify-content-center">
             <div class="col-md-10">
@@ -75,7 +79,7 @@ function renderPost({ post, comments }) {
                                 <i class="bi bi-volume-up me-1"></i>朗读全文
                             </button>
                         </div>
-                        <div class="card-text" id="postContent" style="white-space: pre-wrap;">${escapeHtml(post.content)}</div>
+                        <div class="card-text" id="postContent" style="white-space: pre-wrap;">${post.content_rendered || escapeHtml(post.content)}</div>
                     </div>
                 </div>
 
@@ -93,12 +97,16 @@ function renderPost({ post, comments }) {
                             <strong>${escapeHtml(comment.author_name)}</strong>
                             <small class="text-muted">${formatDate(comment.created_at)}</small>
                         </div>
-                        <p class="mb-0 mt-1">${escapeHtml(comment.content)}</p>
+                        <p class="mb-0 mt-1" style="white-space: pre-wrap;">${comment.content_rendered || escapeHtml(comment.content)}</p>
                     </div>
                 </div>
             `;
         });
     }
+
+    const nicknameValue = currentUser ? currentUser.nickname : '';
+    const nicknameReadonly = currentUser ? 'readonly' : '';
+    const nicknameClass = currentUser ? 'bg-light' : '';
 
     html += `
         <div class="card mt-4">
@@ -108,11 +116,14 @@ function renderPost({ post, comments }) {
                 <form id="comment-form">
                     <div class="mb-3">
                         <label for="nickname" class="form-label">昵称 <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="nickname" required>
+                        <input type="text" class="form-control ${nicknameClass}" id="nickname" value="${escapeHtml(nicknameValue)}" ${nicknameReadonly} required>
                     </div>
                     <div class="mb-3">
                         <label for="content" class="form-label">评论内容 <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="content" rows="3" required></textarea>
+                        <textarea class="form-control" id="content" rows="3" required placeholder="输入 @ 可以提及其他用户"></textarea>
+                        <div class="form-text text-muted">
+                            <i class="bi bi-info-circle"></i> 输入 @ 后可自动补全用户昵称，例如 @管理员
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-primary">提交评论</button>
                 </form>
@@ -124,6 +135,14 @@ function renderPost({ post, comments }) {
 
     document.getElementById('comment-form').addEventListener('submit', handleCommentSubmit);
     document.getElementById('generatePosterBtn').addEventListener('click', openPosterModal);
+    
+    const contentTextarea = document.getElementById('content');
+    if (contentTextarea) {
+        if (mentionAutocomplete) {
+            mentionAutocomplete.destroy();
+        }
+        mentionAutocomplete = initMentionAutocomplete(contentTextarea);
+    }
     
     ttsContentElement = document.getElementById('postContent');
     ttsOriginalContent = post.content;
@@ -262,12 +281,15 @@ function handleDownloadPoster() {
 
 async function handleCommentSubmit(e) {
     e.preventDefault();
+    
+    if (!requireLogin()) return;
+    
     const nickname = document.getElementById('nickname').value.trim();
     const content = document.getElementById('content').value.trim();
     const alertBox = document.getElementById('alert-box');
 
     try {
-        await fetchApi('/comments.php', {
+        const data = await fetchApi('/comments.php', {
             method: 'POST',
             body: JSON.stringify({
                 post_id: postId,
@@ -275,7 +297,16 @@ async function handleCommentSubmit(e) {
                 content
             })
         });
-        window.location.reload();
+        
+        if (data.mentioned_users && data.mentioned_users.length > 0) {
+            const mentionedNames = data.mentioned_users.map(u => '@' + u.nickname).join('、');
+            alertBox.innerHTML = `<div class="alert alert-success">评论成功！已提及 ${mentionedNames}</div>`;
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            window.location.reload();
+        }
     } catch (error) {
         alertBox.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
     }

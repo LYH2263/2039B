@@ -6,7 +6,7 @@
  * 处理用户提交的新评论。
  * 
  * 核心逻辑：
- * 接收 JSON 数据，验证后插入 comments 表。
+ * 接收 JSON 数据，验证后插入 comments 表，解析并保存 @提及。
  * 
  * 异常处理：
  * - 400 Bad Request: 必填字段缺失或 post_id 无效
@@ -14,6 +14,7 @@
  */
 
 require_once '../db.php';
+require_once '../mention_helper.php';
 
 $conn = get_db_connection();
 
@@ -23,20 +24,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nickname = trim($input['nickname'] ?? '');
     $content = trim($input['content'] ?? '');
 
-    // 异常处理：表单空提交或字段缺失（后端校验）
     if ($post_id <= 0 || empty($nickname) || empty($content)) {
         jsonResponse(['error' => 'Invalid input'], 400);
     }
 
-    // 核心逻辑：插入评论
-    $stmt = $conn->prepare("INSERT INTO comments (post_id, author_name, content) VALUES (?, ?, ?)");
-    $stmt->bind_param("iss", $post_id, $nickname, $content);
-    
-    if ($stmt->execute()) {
-        jsonResponse(['message' => 'Comment created'], 201);
-    } else {
-        // 异常处理：插入失败
-        jsonResponse(['error' => 'Failed to create comment'], 500);
+    $current_user = get_current_logged_user();
+    $mentioner_user_id = $current_user ? $current_user['id'] : null;
+    $mentioner_nickname = $current_user ? $current_user['nickname'] : $nickname;
+
+    $conn->begin_transaction();
+
+    try {
+        $stmt = $conn->prepare("INSERT INTO comments (post_id, author_name, content) VALUES (?, ?, ?)");
+        $stmt->bind_param("iss", $post_id, $mentioner_nickname, $content);
+        
+        if (!$stmt->execute()) {
+            throw new Exception('Failed to create comment');
+        }
+
+        $comment_id = $conn->insert_id;
+
+        $post_stmt = $conn->prepare("SELECT title FROM posts WHERE id = ?");
+        $post_stmt->bind_param("i", $post_id);
+        $post_stmt->execute();
+        $post_result = $post_stmt->get_result();
+        $post_row = $post_result->fetch_assoc();
+        $post_title = $post_row ? $post_row['title'] : '';
+
+        $mentioned_users = save_mentions(
+            $conn,
+            'comment',
+            $comment_id,
+            $post_id,
+            $content,
+            $mentioner_nickname,
+            $mentioner_user_id,
+            $post_title
+        );
+
+        $conn->commit();
+
+        jsonResponse([
+            'message' => 'Comment created',
+            'id' => $comment_id,
+            'mentioned_users' => $mentioned_users
+        ], 201);
+    } catch (Exception $e) {
+        $conn->rollback();
+        jsonResponse(['error' => $e->getMessage()], 500);
     }
 }
 ?>

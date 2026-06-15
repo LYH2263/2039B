@@ -8,7 +8,7 @@
  * 
  * 核心逻辑：
  * - GET: 计算分页偏移量，查询 posts 表（关联 comments 统计评论数），返回帖子数组和分页信息。
- * - POST: 接收 JSON 数据，插入新记录到 posts 表。
+ * - POST: 接收 JSON 数据，插入新记录到 posts 表，解析并保存 @提及。
  * 
  * 异常处理：
  * - 400 Bad Request: 发帖时必填字段缺失。
@@ -16,6 +16,7 @@
  */
 
 require_once '../db.php';
+require_once '../mention_helper.php';
 
 $conn = get_db_connection();
 
@@ -63,19 +64,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $author = trim($input['author'] ?? '');
     $content = trim($input['content'] ?? '');
 
-    // 异常处理：表单空提交或字段缺失（后端校验）
     if (empty($title) || empty($author) || empty($content)) {
         jsonResponse(['error' => 'All fields are required'], 400);
     }
 
-    $stmt = $conn->prepare("INSERT INTO posts (title, author_name, content) VALUES (?, ?, ?)");
-    $stmt->bind_param("sss", $title, $author, $content);
-    
-    if ($stmt->execute()) {
-        jsonResponse(['message' => 'Post created', 'id' => $conn->insert_id], 201);
-    } else {
-        // 异常处理：插入失败
-        jsonResponse(['error' => 'Failed to create post'], 500);
+    $current_user = get_current_logged_user();
+    $mentioner_user_id = $current_user ? $current_user['id'] : null;
+    $mentioner_nickname = $current_user ? $current_user['nickname'] : $author;
+
+    $conn->begin_transaction();
+
+    try {
+        $stmt = $conn->prepare("INSERT INTO posts (title, author_name, content) VALUES (?, ?, ?)");
+        $stmt->bind_param("sss", $title, $mentioner_nickname, $content);
+        
+        if (!$stmt->execute()) {
+            throw new Exception('Failed to create post');
+        }
+
+        $post_id = $conn->insert_id;
+
+        $mentioned_users = save_mentions(
+            $conn,
+            'post',
+            $post_id,
+            $post_id,
+            $content,
+            $mentioner_nickname,
+            $mentioner_user_id,
+            $title
+        );
+
+        $conn->commit();
+
+        jsonResponse([
+            'message' => 'Post created',
+            'id' => $post_id,
+            'mentioned_users' => $mentioned_users
+        ], 201);
+    } catch (Exception $e) {
+        $conn->rollback();
+        jsonResponse(['error' => $e->getMessage()], 500);
     }
 }
 ?>

@@ -124,3 +124,43 @@ CREATE TABLE IF NOT EXISTS `private_messages` (
     INDEX `idx_conversation_created` (`conversation_id`, `created_at`),
     INDEX `idx_receiver_unread` (`receiver_id`, `is_read`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Mentions table (@提及记录表)
+CREATE TABLE IF NOT EXISTS `mentions` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `source_type` VARCHAR(20) NOT NULL COMMENT '来源类型：post-帖子，comment-评论',
+    `source_id` INT NOT NULL COMMENT '来源ID（帖子ID或评论ID）',
+    `post_id` INT NOT NULL COMMENT '所属帖子ID（用于跳转）',
+    `mentioned_user_id` INT NOT NULL COMMENT '被提及用户ID',
+    `mentioned_nickname` VARCHAR(50) NOT NULL COMMENT '被提及用户昵称',
+    `mentioner_user_id` INT NULL COMMENT '提及者用户ID（登录用户）',
+    `mentioner_nickname` VARCHAR(100) NOT NULL COMMENT '提及者昵称',
+    `content_snippet` VARCHAR(200) NULL COMMENT '内容片段预览',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    FOREIGN KEY (`mentioned_user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    INDEX `idx_mentioned_user` (`mentioned_user_id`),
+    INDEX `idx_source` (`source_type`, `source_id`),
+    INDEX `idx_post_id` (`post_id`),
+    INDEX `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Notifications table (用户提醒表)
+CREATE TABLE IF NOT EXISTS `notifications` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL COMMENT '接收提醒的用户ID',
+    `type` VARCHAR(20) NOT NULL COMMENT '提醒类型：mention-@提及，comment-评论回复',
+    `source_type` VARCHAR(20) NOT NULL COMMENT '来源类型：post-帖子，comment-评论',
+    `source_id` INT NOT NULL COMMENT '来源ID',
+    `post_id` INT NOT NULL COMMENT '所属帖子ID',
+    `actor_nickname` VARCHAR(100) NOT NULL COMMENT '触发者昵称',
+    `title` VARCHAR(200) NOT NULL COMMENT '提醒标题',
+    `content` TEXT NULL COMMENT '提醒内容',
+    `is_read` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否已读：0-未读，1-已读',
+    `read_at` DATETIME NULL COMMENT '阅读时间',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    INDEX `idx_user_id` (`user_id`),
+    INDEX `idx_user_unread` (`user_id`, `is_read`),
+    INDEX `idx_created_at` (`created_at`),
+    INDEX `idx_source` (`source_type`, `source_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

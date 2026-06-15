@@ -2,7 +2,7 @@
 require_once '../db.php';
 
 $conn = get_db_connection();
-$current_user = get_current_user();
+$current_user = get_current_logged_user();
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $stories_per_page = 10;

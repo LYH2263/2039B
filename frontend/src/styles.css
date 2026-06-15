@@ -398,3 +398,107 @@ body {
 #messageInput {
     transition: height 0.1s ease;
 }
+
+/* @提及 高亮样式 */
+.mention-highlight,
+.mention-link {
+    color: var(--primary-color) !important;
+    font-weight: 600;
+    text-decoration: none;
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
+    padding: 1px 6px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.mention-link:hover {
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.2) 0%, rgba(99, 102, 241, 0.1) 100%);
+    text-decoration: none;
+    color: var(--primary-hover) !important;
+}
+
+/* @提及 自动补全下拉框 */
+.mention-dropdown {
+    min-width: 280px !important;
+    max-width: 350px;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
+    overflow: hidden;
+    animation: dropdownFadeIn 0.15s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mention-dropdown .mention-item {
+    padding: 10px 14px !important;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.mention-dropdown .mention-item:last-child {
+    border-bottom: none;
+}
+
+.mention-dropdown .mention-item:hover {
+    background-color: #f9fafb;
+}
+
+.mention-dropdown .mention-item.active {
+    background-color: var(--primary-color) !important;
+}
+
+.mention-dropdown .mention-item.active small {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.mention-dropdown .mention-item .avatar-sm {
+    font-weight: 600;
+}
+
+.mention-dropdown mark {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    padding: 0 2px;
+    border-radius: 2px;
+    color: inherit;
+}
+
+/* 提醒页面样式 */
+.notification-item {
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.notification-item:hover {
+    background-color: #f9fafb !important;
+    transform: translateX(4px);
+    border-left-color: var(--primary-color);
+}
+
+.notification-item.bg-light {
+    border-left-color: var(--primary-color);
+    background: linear-gradient(90deg, rgba(79, 70, 229, 0.05) 0%, transparent 100%);
+}
+
+/* 输入框提示文字 */
+textarea::placeholder {
+    color: #9ca3af;
+}
+
+/* 响应式调整 */
+@media (max-width: 576px) {
+    .mention-dropdown {
+        min-width: 240px !important;
+        max-width: calc(100vw - 30px) !important;
+    }
+}

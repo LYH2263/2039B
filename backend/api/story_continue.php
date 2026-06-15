@@ -3,7 +3,7 @@ require_once '../db.php';
 
 $conn = get_db_connection();
 check_user_auth();
-$current_user = get_current_user();
+$current_user = get_current_logged_user();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);

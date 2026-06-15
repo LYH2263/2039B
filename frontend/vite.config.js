@@ -19,6 +19,7 @@ export default defineConfig({
         create_story: resolve(__dirname, 'create_story.html'),
         story_detail: resolve(__dirname, 'story_detail.html'),
         messages: resolve(__dirname, 'messages.html'),
+        notifications: resolve(__dirname, 'notifications.html'),
       }
     }
   }

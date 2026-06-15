@@ -2,7 +2,7 @@
 require_once '../db.php';
 
 $conn = get_db_connection();
-$current_user = get_current_user();
+$current_user = get_current_logged_user();
 
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     jsonResponse(['error' => '无效的故事ID'], 400);

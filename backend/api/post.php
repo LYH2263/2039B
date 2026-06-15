@@ -9,6 +9,7 @@
  * 1. 验证 ID 参数合法性
  * 2. 查询 posts 表获取帖子详情
  * 3. 查询 comments 表获取该帖子的所有评论
+ * 4. 渲染 @提及 为高亮链接
  * 
  * 异常处理：
  * - 400 Bad Request: ID 参数缺失或非数字
@@ -16,6 +17,7 @@
  */
 
 require_once '../db.php';
+require_once '../mention_helper.php';
 
 $conn = get_db_connection();
 
@@ -50,6 +52,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $comments = [];
     while($row = $comments_result->fetch_assoc()) {
         $comments[] = $row;
+    }
+
+    $post['content_rendered'] = render_mentions_text($post['content'], $conn);
+    
+    foreach ($comments as &$comment) {
+        $comment['content_rendered'] = render_mentions_text($comment['content'], $conn);
     }
 
     jsonResponse([

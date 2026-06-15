@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]
     ]);
 } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $current_user = get_current_user();
+    $current_user = get_current_logged_user();
     if ($current_user) {
         jsonResponse(['logged_in' => true, 'user' => $current_user]);
     } else {
