@@ -99,6 +99,7 @@ export async function renderHeader(activeLink = '') {
                     <li class="nav-item"><a class="nav-link ${activeLink === 'feed' ? 'active' : ''}" href="/feed.html">动态</a></li>
                     <li class="nav-item"><a class="nav-link ${activeLink === 'collections' ? 'active' : ''}" href="/collections.html">合集</a></li>
                     <li class="nav-item"><a class="nav-link ${activeLink === 'stories' ? 'active' : ''}" href="/stories.html">接龙故事</a></li>
+                    <li class="nav-item"><a class="nav-link ${activeLink === 'feedback' ? 'active' : ''}" href="/feedback.html">意见反馈</a></li>
                     <li class="nav-item"><a class="nav-link ${activeLink === 'create' ? 'active' : ''}" href="/create_post.html">发布新帖</a></li>
                 </ul>
                 <ul class="navbar-nav">

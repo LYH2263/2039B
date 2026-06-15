@@ -314,3 +314,35 @@ BEGIN
 END//
 
 DELIMITER ;
+
+-- Tickets table (工单主表)
+CREATE TABLE IF NOT EXISTS `tickets` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `ticket_no` VARCHAR(20) NOT NULL UNIQUE COMMENT '工单号，格式 TK-年月日-4位序号',
+    `user_id` INT NULL COMMENT '提交用户ID（登录用户）',
+    `nickname` VARCHAR(100) NOT NULL COMMENT '提交者昵称',
+    `type` VARCHAR(30) NOT NULL COMMENT '工单类型：bug-缺陷反馈，feature-功能建议，account-账号问题，other-其他',
+    `title` VARCHAR(200) NOT NULL COMMENT '工单标题',
+    `description` TEXT NOT NULL COMMENT '问题描述',
+    `contact` VARCHAR(200) NOT NULL COMMENT '联系方式',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'pending' COMMENT '状态：pending-待处理，processing-处理中，resolved-已解决，closed-已关闭',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX `idx_ticket_no` (`ticket_no`),
+    INDEX `idx_user_id` (`user_id`),
+    INDEX `idx_status` (`status`),
+    INDEX `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Ticket replies table (工单回复表)
+CREATE TABLE IF NOT EXISTS `ticket_replies` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `ticket_id` INT NOT NULL COMMENT '工单ID',
+    `reply_type` VARCHAR(20) NOT NULL DEFAULT 'admin' COMMENT '回复类型：admin-管理员回复，system-系统自动',
+    `replier_name` VARCHAR(100) NOT NULL COMMENT '回复者名称',
+    `content` TEXT NOT NULL COMMENT '回复内容',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '回复时间',
+    FOREIGN KEY (`ticket_id`) REFERENCES `tickets`(`id`) ON DELETE CASCADE,
+    INDEX `idx_ticket_id` (`ticket_id`),
+    INDEX `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

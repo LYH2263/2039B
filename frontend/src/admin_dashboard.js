@@ -26,7 +26,7 @@ function renderStats(stats) {
         </div>
 
         <div class="row">
-            <div class="col-md-4 mb-4">
+            <div class="col-md-3 mb-4">
                 <div class="card h-100 border-0">
                     <div class="card-body p-4 text-center">
                         <div class="mb-3 text-primary">
@@ -41,7 +41,7 @@ function renderStats(stats) {
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
+            <div class="col-md-3 mb-4">
                 <div class="card h-100 border-0">
                     <div class="card-body p-4 text-center">
                         <div class="mb-3 text-success">
@@ -56,7 +56,7 @@ function renderStats(stats) {
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
+            <div class="col-md-3 mb-4">
                 <div class="card h-100 border-0">
                     <div class="card-body p-4 text-center">
                         <div class="mb-3 text-info">
@@ -65,6 +65,18 @@ function renderStats(stats) {
                         <h5 class="card-title text-muted text-uppercase small fw-bold">合集总数</h5>
                         <h1 class="display-4 fw-bold text-dark mb-4">${stats.collection_count || 0}</h1>
                         <a href="/admin/collections.html" class="btn btn-primary w-100">管理合集</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card h-100 border-0">
+                    <div class="card-body p-4 text-center">
+                        <div class="mb-3 text-warning">
+                            <i class="bi bi-envelope-paper" style="font-size: 48px;"></i>
+                        </div>
+                        <h5 class="card-title text-muted text-uppercase small fw-bold">工单管理</h5>
+                        <h1 class="display-4 fw-bold text-dark mb-4"><i class="bi bi-box-arrow-up-right small"></i></h1>
+                        <a href="/admin/tickets.html" class="btn btn-primary w-100">管理工单</a>
                     </div>
                 </div>
             </div>

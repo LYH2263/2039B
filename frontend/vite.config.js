@@ -25,6 +25,8 @@ export default defineConfig({
         collection: resolve(__dirname, 'collection.html'),
         create_collection: resolve(__dirname, 'create_collection.html'),
         admin_collections: resolve(__dirname, 'admin/collections.html'),
+        admin_tickets: resolve(__dirname, 'admin/tickets.html'),
+        feedback: resolve(__dirname, 'feedback.html'),
       }
     }
   }
