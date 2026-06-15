@@ -344,3 +344,57 @@ body {
         font-size: 1rem;
     }
 }
+
+/* 私信页面样式 */
+.conversation-list .conversation-item {
+    transition: background-color 0.15s ease;
+}
+
+.conversation-list .conversation-item:hover {
+    background-color: #f8f9fa;
+}
+
+.conversation-list .conversation-item.bg-primary {
+    background-color: rgba(79, 70, 229, 0.1) !important;
+}
+
+.message-item {
+    animation: messageFadeIn 0.3s ease-out;
+}
+
+@keyframes messageFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#messageList {
+    scroll-behavior: smooth;
+}
+
+.avatar-circle {
+    user-select: none;
+}
+
+/* 搜索用户结果 */
+.search-user-item {
+    transition: background-color 0.15s ease;
+}
+
+.search-user-item:hover {
+    background-color: #f8f9fa;
+}
+
+/* 消息气泡优化 */
+.bg-primary {
+    background-color: var(--primary-color) !important;
+}
+
+#messageInput {
+    transition: height 0.1s ease;
+}

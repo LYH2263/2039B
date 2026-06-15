@@ -80,3 +80,47 @@ CREATE TABLE IF NOT EXISTS `story_paragraphs` (
     UNIQUE KEY `uk_story_order` (`story_id`, `paragraph_order`),
     INDEX `idx_story_id` (`story_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Private conversations table (私信会话表)
+CREATE TABLE IF NOT EXISTS `private_conversations` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user1_id` INT NOT NULL COMMENT '用户1ID（较小ID）',
+    `user2_id` INT NOT NULL COMMENT '用户2ID（较大ID）',
+    `user1_nickname` VARCHAR(50) NOT NULL COMMENT '用户1昵称',
+    `user2_nickname` VARCHAR(50) NOT NULL COMMENT '用户2昵称',
+    `last_message_id` INT NULL COMMENT '最后一条消息ID',
+    `last_message_content` VARCHAR(500) NULL COMMENT '最后一条消息摘要',
+    `last_message_time` DATETIME NULL COMMENT '最后一条消息时间',
+    `last_sender_id` INT NULL COMMENT '最后一条消息发送者ID',
+    `user1_unread_count` INT NOT NULL DEFAULT 0 COMMENT '用户1未读数',
+    `user2_unread_count` INT NOT NULL DEFAULT 0 COMMENT '用户2未读数',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    FOREIGN KEY (`user1_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`user2_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    UNIQUE KEY `uk_users` (`user1_id`, `user2_id`),
+    INDEX `idx_user1` (`user1_id`),
+    INDEX `idx_user2` (`user2_id`),
+    INDEX `idx_user1_updated` (`user1_id`, `updated_at`),
+    INDEX `idx_user2_updated` (`user2_id`, `updated_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Private messages table (私信消息表)
+CREATE TABLE IF NOT EXISTS `private_messages` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `conversation_id` INT NOT NULL COMMENT '会话ID',
+    `sender_id` INT NOT NULL COMMENT '发送者ID',
+    `receiver_id` INT NOT NULL COMMENT '接收者ID',
+    `content` TEXT NOT NULL COMMENT '消息内容',
+    `is_read` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否已读：0-未读，1-已读',
+    `read_at` DATETIME NULL COMMENT '阅读时间',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '发送时间',
+    FOREIGN KEY (`conversation_id`) REFERENCES `private_conversations`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`sender_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`receiver_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    INDEX `idx_conversation_id` (`conversation_id`),
+    INDEX `idx_sender_id` (`sender_id`),
+    INDEX `idx_receiver_id` (`receiver_id`),
+    INDEX `idx_conversation_created` (`conversation_id`, `created_at`),
+    INDEX `idx_receiver_unread` (`receiver_id`, `is_read`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
