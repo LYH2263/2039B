@@ -8,3 +8,23 @@
 代码生成/
 题目/
 对话/
+
+# 依赖
+node_modules/
+frontend/node_modules/
+
+# 构建产物
+frontend/dist/
+dist/
+
+# 日志与环境
+*.log
+npm-debug.log*
+.env
+.env.local
+
+# 系统/编辑器
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
