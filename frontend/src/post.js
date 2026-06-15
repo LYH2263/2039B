@@ -1,6 +1,8 @@
 import { fetchApi, formatDate } from './config.js';
 import { renderHeader } from './header.js';
 import { generatePoster, downloadPoster, POSTER_THEMES } from './poster.js';
+import { tts, MIN_RATE, MAX_RATE } from './tts.js';
+import './styles.css';
 
 renderHeader();
 
@@ -12,12 +14,28 @@ let currentPost = null;
 let currentTheme = 'indigo';
 let currentPosterCanvas = null;
 
+let ttsSupported = false;
+let ttsInitialized = false;
+let ttsContentElement = null;
+let ttsOriginalContent = null;
+let ttsSentenceElements = [];
+let ttsCurrentSentenceIndex = -1;
+
 if (!postId) {
     app.innerHTML = '<div class="alert alert-danger">无效的帖子ID</div>';
 } else {
     loadPost(postId);
     initPosterModal();
+    initTTS();
 }
+
+window.addEventListener('beforeunload', () => {
+    cleanupTTS();
+});
+
+window.addEventListener('pagehide', () => {
+    cleanupTTS();
+});
 
 async function loadPost(id) {
     try {
@@ -53,8 +71,11 @@ function renderPost({ post, comments }) {
                             <button class="btn btn-outline-primary btn-sm" id="generatePosterBtn">
                                 <i class="bi bi-image me-1"></i>生成分享海报
                             </button>
+                            <button class="btn btn-outline-success btn-sm tts-start-btn" id="ttsStartBtn" style="display: none;">
+                                <i class="bi bi-volume-up me-1"></i>朗读全文
+                            </button>
                         </div>
-                        <div class="card-text" style="white-space: pre-wrap;">${escapeHtml(post.content)}</div>
+                        <div class="card-text" id="postContent" style="white-space: pre-wrap;">${escapeHtml(post.content)}</div>
                     </div>
                 </div>
 
@@ -103,6 +124,17 @@ function renderPost({ post, comments }) {
 
     document.getElementById('comment-form').addEventListener('submit', handleCommentSubmit);
     document.getElementById('generatePosterBtn').addEventListener('click', openPosterModal);
+    
+    ttsContentElement = document.getElementById('postContent');
+    ttsOriginalContent = post.content;
+    
+    if (ttsSupported) {
+        const ttsBtn = document.getElementById('ttsStartBtn');
+        if (ttsBtn) {
+            ttsBtn.style.display = 'inline-flex';
+            ttsBtn.addEventListener('click', startTTS);
+        }
+    }
 }
 
 function initPosterModal() {
@@ -252,4 +284,317 @@ async function handleCommentSubmit(e) {
 function escapeHtml(text) {
     if (!text) return '';
     return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function escapeHtmlForSpan(text) {
+    if (!text) return '';
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+async function initTTS() {
+    if (ttsInitialized) return;
+    
+    ttsSupported = tts.isSupported();
+    
+    if (!ttsSupported) {
+        showUnsupportedAlert();
+        return;
+    }
+    
+    try {
+        await tts.init();
+        ttsInitialized = true;
+        
+        if (currentPost) {
+            const ttsBtn = document.getElementById('ttsStartBtn');
+            if (ttsBtn) {
+                ttsBtn.style.display = 'inline-flex';
+            }
+        }
+        
+        initTTSControlBar();
+        
+        tts.onVoicesChanged = (voices) => {
+            populateVoiceSelect(voices);
+        };
+        
+    } catch (error) {
+        console.error('TTS init failed:', error);
+        ttsSupported = false;
+        showUnsupportedAlert();
+    }
+}
+
+function showUnsupportedAlert() {
+    const alert = document.getElementById('ttsUnsupportedAlert');
+    if (alert) {
+        alert.classList.remove('d-none');
+    }
+}
+
+function initTTSControlBar() {
+    const playPauseBtn = document.getElementById('ttsPlayPauseBtn');
+    const stopBtn = document.getElementById('ttsStopBtn');
+    const closeBtn = document.getElementById('ttsCloseBtn');
+    const rateSlider = document.getElementById('ttsRateSlider');
+    const voiceSelect = document.getElementById('ttsVoiceSelect');
+    
+    if (playPauseBtn) {
+        playPauseBtn.addEventListener('click', togglePlayPause);
+    }
+    
+    if (stopBtn) {
+        stopBtn.addEventListener('click', stopTTS);
+    }
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeTTS);
+    }
+    
+    if (rateSlider) {
+        rateSlider.value = tts.getPreferredRate();
+        document.getElementById('ttsRateValue').textContent = `${tts.getPreferredRate().toFixed(1)}x`;
+        
+        rateSlider.addEventListener('input', (e) => {
+            const rate = parseFloat(e.target.value);
+            document.getElementById('ttsRateValue').textContent = `${rate.toFixed(1)}x`;
+            tts.setRate(rate);
+        });
+    }
+    
+    populateVoiceSelect(tts.getVoices());
+}
+
+function populateVoiceSelect(voices) {
+    const voiceSelect = document.getElementById('ttsVoiceSelect');
+    if (!voiceSelect) return;
+    
+    voiceSelect.innerHTML = '';
+    
+    if (voices.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = '无可用嗓音';
+        option.disabled = true;
+        voiceSelect.appendChild(option);
+        return;
+    }
+    
+    const zhVoices = voices.filter(v => v.lang.toLowerCase().startsWith('zh'));
+    const enVoices = voices.filter(v => v.lang.toLowerCase().startsWith('en'));
+    const otherVoices = voices.filter(v => 
+        !v.lang.toLowerCase().startsWith('zh') && !v.lang.toLowerCase().startsWith('en')
+    );
+    
+    const preferredVoice = tts.getPreferredVoice();
+    
+    const addVoiceGroup = (voiceList, label) => {
+        if (voiceList.length === 0) return;
+        
+        const group = document.createElement('optgroup');
+        group.label = label;
+        
+        voiceList.forEach(voice => {
+            const option = document.createElement('option');
+            option.value = voice.name;
+            option.textContent = `${voice.name} (${voice.lang})${voice.default ? ' - 默认' : ''}`;
+            if (preferredVoice && voice.name === preferredVoice.name) {
+                option.selected = true;
+            }
+            group.appendChild(option);
+        });
+        
+        voiceSelect.appendChild(group);
+    };
+    
+    addVoiceGroup(zhVoices, '中文');
+    addVoiceGroup(enVoices, 'English');
+    addVoiceGroup(otherVoices, '其他');
+    
+    voiceSelect.addEventListener('change', (e) => {
+        tts.setVoice(e.target.value);
+    });
+}
+
+function startTTS() {
+    if (!ttsSupported || !currentPost) return;
+    
+    const text = ttsOriginalContent;
+    if (!text || text.trim().length === 0) return;
+    
+    wrapContentWithSentences(text);
+    
+    const controlBar = document.getElementById('ttsControlBar');
+    if (controlBar) {
+        controlBar.classList.remove('d-none');
+        document.body.style.paddingBottom = '80px';
+    }
+    
+    const voiceSelect = document.getElementById('ttsVoiceSelect');
+    const selectedVoiceName = voiceSelect ? voiceSelect.value : '';
+    const voice = tts.getVoices().find(v => v.name === selectedVoiceName) || tts.getPreferredVoice();
+    const rate = parseFloat(document.getElementById('ttsRateSlider').value) || tts.getPreferredRate();
+    
+    tts.speak(text, {
+        voice,
+        rate,
+        onBoundary: handleTTSBoundary,
+        onEnd: handleTTSEnd
+    });
+    
+    updatePlayPauseButton();
+    updateProgress();
+}
+
+function wrapContentWithSentences(text) {
+    if (!ttsContentElement) return;
+    
+    const sentences = tts.splitSentences(text);
+    
+    let html = '';
+    sentences.forEach((sentence, index) => {
+        const escaped = escapeHtmlForSpan(sentence);
+        html += `<span class="tts-sentence" data-sentence-index="${index}">${escaped}</span>`;
+    });
+    
+    ttsContentElement.innerHTML = html;
+    ttsContentElement.style.whiteSpace = 'pre-wrap';
+    
+    ttsSentenceElements = Array.from(ttsContentElement.querySelectorAll('.tts-sentence'));
+}
+
+function handleTTSBoundary(event) {
+    if (event.type === 'sentencestart') {
+        highlightSentence(event.sentenceIndex);
+        updateProgress();
+    }
+}
+
+function handleTTSEnd() {
+    resetTTSState();
+    updatePlayPauseButton();
+    updateProgress();
+}
+
+function highlightSentence(index) {
+    ttsCurrentSentenceIndex = index;
+    
+    ttsSentenceElements.forEach((el, i) => {
+        if (i === index) {
+            el.classList.add('tts-sentence-active');
+            scrollToElement(el);
+        } else {
+            el.classList.remove('tts-sentence-active');
+        }
+    });
+}
+
+function scrollToElement(element) {
+    if (!element) return;
+    
+    const rect = element.getBoundingClientRect();
+    const isVisible = rect.top >= 0 && 
+                      rect.bottom <= (window.innerHeight || document.documentElement.clientHeight);
+    
+    if (!isVisible) {
+        const controlBarHeight = 80;
+        const elementTop = rect.top + window.pageYOffset;
+        const scrollTo = elementTop - (window.innerHeight / 3) - controlBarHeight;
+        
+        window.scrollTo({
+            top: Math.max(0, scrollTo),
+            behavior: 'smooth'
+        });
+    }
+}
+
+function togglePlayPause() {
+    if (tts.isPaused) {
+        tts.resume();
+    } else if (tts.isPlaying) {
+        tts.pause();
+    } else {
+        startTTS();
+    }
+    updatePlayPauseButton();
+}
+
+function stopTTS() {
+    tts.stop();
+    resetTTSState();
+    restoreOriginalContent();
+    updatePlayPauseButton();
+    updateProgress();
+}
+
+function closeTTS() {
+    tts.stop();
+    resetTTSState();
+    
+    const controlBar = document.getElementById('ttsControlBar');
+    if (controlBar) {
+        controlBar.classList.add('d-none');
+        document.body.style.paddingBottom = '';
+    }
+    
+    restoreOriginalContent();
+}
+
+function resetTTSState() {
+    ttsCurrentSentenceIndex = -1;
+    
+    ttsSentenceElements.forEach(el => {
+        el.classList.remove('tts-sentence-active');
+    });
+}
+
+function restoreOriginalContent() {
+    if (ttsContentElement && ttsOriginalContent) {
+        ttsContentElement.innerHTML = escapeHtml(ttsOriginalContent);
+        ttsContentElement.style.whiteSpace = 'pre-wrap';
+        ttsSentenceElements = [];
+        ttsCurrentSentenceIndex = -1;
+    }
+}
+
+function updatePlayPauseButton() {
+    const btn = document.getElementById('ttsPlayPauseBtn');
+    if (!btn) return;
+    
+    const icon = btn.querySelector('i');
+    if (!icon) return;
+    
+    if (tts.isPlaying && !tts.isPaused) {
+        icon.className = 'bi bi-pause-fill';
+        btn.title = '暂停';
+    } else {
+        icon.className = 'bi bi-play-fill';
+        btn.title = '播放';
+    }
+}
+
+function updateProgress() {
+    const progressEl = document.getElementById('ttsProgress');
+    if (!progressEl) return;
+    
+    const total = tts.sentences.length || ttsSentenceElements.length;
+    const current = Math.max(0, tts.currentSentenceIndex + 1);
+    
+    progressEl.textContent = `${current} / ${total}`;
+}
+
+function cleanupTTS() {
+    tts.destroy();
+    restoreOriginalContent();
+    
+    const controlBar = document.getElementById('ttsControlBar');
+    if (controlBar) {
+        controlBar.classList.add('d-none');
+        document.body.style.paddingBottom = '';
+    }
 }

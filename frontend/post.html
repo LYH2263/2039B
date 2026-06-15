@@ -51,5 +51,55 @@
             </div>
         </div>
     </div>
+
+    <div id="ttsUnsupportedAlert" class="alert alert-warning alert-dismissible fade show d-none" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 2000; max-width: 400px;">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <span>您的浏览器不支持语音朗读功能，请使用 Chrome、Edge 或 Safari 最新版本。</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div id="ttsControlBar" class="tts-control-bar d-none">
+        <div class="container">
+            <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2">
+                    <button id="ttsPlayPauseBtn" class="tts-btn tts-btn-primary" title="播放/暂停">
+                        <i class="bi bi-play-fill"></i>
+                    </button>
+                    <button id="ttsStopBtn" class="tts-btn tts-btn-secondary" title="停止">
+                        <i class="bi bi-stop-fill"></i>
+                    </button>
+                </div>
+
+                <div class="vr bg-light opacity-25"></div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <label class="tts-label text-nowrap mb-0">
+                        <i class="bi bi-speedometer2 me-1"></i>语速
+                    </label>
+                    <input type="range" id="ttsRateSlider" class="tts-rate-slider" min="0.5" max="2" step="0.1" value="1">
+                    <span id="ttsRateValue" class="tts-rate-value text-nowrap">1.0x</span>
+                </div>
+
+                <div class="vr bg-light opacity-25"></div>
+
+                <div class="d-flex align-items-center gap-2 flex-grow-1">
+                    <label class="tts-label text-nowrap mb-0">
+                        <i class="bi bi-person-voice me-1"></i>嗓音
+                    </label>
+                    <select id="ttsVoiceSelect" class="tts-voice-select form-select form-select-sm">
+                        <option value="">加载中...</option>
+                    </select>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <span id="ttsProgress" class="tts-progress text-nowrap text-muted">0 / 0</span>
+                </div>
+
+                <button id="ttsCloseBtn" class="tts-btn tts-btn-secondary" title="关闭">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

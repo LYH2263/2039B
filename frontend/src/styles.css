@@ -142,3 +142,205 @@ body {
 .fade-in {
     animation: fadeIn 0.4s ease-out forwards;
 }
+
+/* TTS 朗读控制条 */
+.tts-control-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #6366f1 100%);
+    color: white;
+    padding: 12px 0;
+    box-shadow: 0 -4px 20px rgba(79, 70, 229, 0.3);
+    z-index: 1050;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.tts-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1.1rem;
+}
+
+.tts-btn-primary {
+    background: white;
+    color: var(--primary-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.tts-btn-primary:hover {
+    background: #f8f9fa;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.tts-btn-secondary {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    backdrop-filter: blur(10px);
+}
+
+.tts-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+.tts-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+.tts-rate-slider {
+    width: 100px;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+
+.tts-rate-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease;
+}
+
+.tts-rate-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+.tts-rate-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.tts-rate-value {
+    font-size: 0.875rem;
+    font-weight: 600;
+    min-width: 45px;
+    text-align: center;
+}
+
+.tts-voice-select {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    font-size: 0.875rem;
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 150px;
+    max-width: 250px;
+}
+
+.tts-voice-select:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.tts-voice-select:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+}
+
+.tts-voice-select option {
+    background: var(--primary-color);
+    color: white;
+}
+
+.tts-progress {
+    font-size: 0.875rem;
+    font-weight: 500;
+    opacity: 0.85;
+}
+
+/* 朗读高亮样式 */
+.tts-sentence {
+    transition: background-color 0.3s ease, border-radius 0.3s ease;
+    border-radius: 3px;
+    padding: 0 2px;
+    margin: 0 -2px;
+}
+
+.tts-sentence-active {
+    background: linear-gradient(90deg, rgba(79, 70, 229, 0.2) 0%, rgba(99, 102, 241, 0.15) 100%);
+    border-radius: 4px;
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.3);
+}
+
+.tts-char-active {
+    background: rgba(79, 70, 229, 0.4);
+    border-radius: 2px;
+}
+
+/* 朗读按钮 */
+.tts-start-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .tts-control-bar .container {
+        padding: 0 12px;
+    }
+    
+    .tts-voice-select {
+        min-width: 100px;
+        font-size: 0.75rem;
+    }
+    
+    .tts-rate-slider {
+        width: 60px;
+    }
+    
+    .tts-label {
+        display: none;
+    }
+    
+    .tts-progress {
+        font-size: 0.75rem;
+    }
+    
+    .tts-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
+}
