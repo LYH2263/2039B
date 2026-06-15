@@ -4,6 +4,7 @@ import { generatePoster, downloadPoster, POSTER_THEMES } from './poster.js';
 import { tts, MIN_RATE, MAX_RATE } from './tts.js';
 import { initMentionAutocomplete } from './mention.js';
 import { renderLevelBadge, showPointsToast, escapeHtml } from './level_badge.js';
+import { loadFollowStatus, renderFollowButton, bindFollowButtons, renderFollowStats, renderAuthorBlock } from './follow.js';
 import './styles.css';
 
 renderHeader();
@@ -40,11 +41,36 @@ window.addEventListener('pagehide', () => {
     cleanupTTS();
 });
 
+async function findUserIdByNickname(nickname) {
+    try {
+        const searchData = await fetchApi(`/users_search.php?keyword=${encodeURIComponent(nickname)}`);
+        const matched = (searchData.data?.list || []).find(u => u.nickname === nickname);
+        if (matched) return matched.user_id || matched.id;
+    } catch (e) { }
+    return 0;
+}
+
 async function loadPost(id) {
     try {
         const data = await fetchApi(`/post.php?id=${id}`);
         currentPost = data.post;
-        renderPost(data);
+
+        const currentUser = getCurrentUser();
+        let authorUserId = currentPost.author_user_id || data.post.author_user_id || 0;
+        if (!authorUserId) {
+            authorUserId = await findUserIdByNickname(currentPost.author_name);
+        }
+        currentPost.author_user_id = authorUserId;
+
+        let followStatus = { is_following: false, is_self: false, stats: { followers: 0, followings: 0 } };
+        if (authorUserId && currentUser) {
+            followStatus = await loadFollowStatus(authorUserId);
+        } else if (currentUser && currentUser.nickname === currentPost.author_name) {
+            followStatus.is_self = true;
+        }
+        currentPost.author_follow_status = followStatus;
+
+        await renderPost(data);
     } catch (error) {
         app.innerHTML = `<div class="alert alert-danger">加载失败: ${error.message}</div>`;
     }
@@ -52,10 +78,24 @@ async function loadPost(id) {
 
 function renderPost({ post, comments }) {
     document.title = `${post.title} - 极简论坛`;
-    
+
     const currentUser = getCurrentUser();
     const authorBadgeHtml = renderLevelBadge(post.author_level, 'sm');
-    
+
+    const followStatus = currentPost.author_follow_status || {};
+    const isSelf = followStatus.is_self || (currentUser && currentUser.nickname === post.author_name);
+    const authorUserId = currentPost.author_user_id || 0;
+
+    const authorBlockHtml = renderAuthorBlock({
+        user_id: authorUserId,
+        nickname: post.author_name,
+        author_level: post.author_level,
+        follow_stats: followStatus.stats,
+        show_follow_button: true,
+        is_following: followStatus.is_following,
+        is_self: isSelf
+    }, { avatarSize: 48 });
+
     let html = `
         <div class="row justify-content-center">
             <div class="col-md-10">
@@ -66,16 +106,13 @@ function renderPost({ post, comments }) {
                     </ol>
                 </nav>
 
-                <div class="card mb-4">
+                <div class="card mb-3">
+                    <div class="card-header bg-white py-3">
+                        ${authorBlockHtml}
+                    </div>
                     <div class="card-body">
                         <h1 class="card-title mb-3">${escapeHtml(post.title)}</h1>
                         <h6 class="card-subtitle mb-4 text-muted d-flex align-items-center gap-2 flex-wrap">
-                            <span>作者:</span>
-                            <span class="author-name-with-badge">
-                                <span>${escapeHtml(post.author_name)}</span>
-                                ${authorBadgeHtml}
-                            </span>
-                            <span>|</span>
                             <span>发布于: ${formatDate(post.created_at)}</span>
                         </h6>
                         <div class="d-flex gap-2 mb-4">
@@ -146,7 +183,7 @@ function renderPost({ post, comments }) {
 
     document.getElementById('comment-form').addEventListener('submit', handleCommentSubmit);
     document.getElementById('generatePosterBtn').addEventListener('click', openPosterModal);
-    
+
     const contentTextarea = document.getElementById('content');
     if (contentTextarea) {
         if (mentionAutocomplete) {
@@ -154,10 +191,10 @@ function renderPost({ post, comments }) {
         }
         mentionAutocomplete = initMentionAutocomplete(contentTextarea);
     }
-    
+
     ttsContentElement = document.getElementById('postContent');
     ttsOriginalContent = post.content;
-    
+
     if (ttsSupported) {
         const ttsBtn = document.getElementById('ttsStartBtn');
         if (ttsBtn) {
@@ -165,6 +202,8 @@ function renderPost({ post, comments }) {
             ttsBtn.addEventListener('click', startTTS);
         }
     }
+
+    bindFollowButtons(app);
 }
 
 function initPosterModal() {

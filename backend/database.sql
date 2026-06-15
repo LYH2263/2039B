@@ -245,3 +245,20 @@ INSERT IGNORE INTO `level_badges` (`level`, `level_name`, `min_points`, `badge_i
 (3, 'Lv3 进阶', 200, '🌳', '#3B82F6', '持续贡献，社区中坚。'),
 (4, 'Lv4 高手', 500, '🏆', '#F59E0B', '经验丰富，社区达人。'),
 (5, 'Lv5 资深', 1000, '👑', '#EF4444', '殿堂级用户，社区瑰宝。');
+
+-- Follows table (用户关注关系表)
+CREATE TABLE IF NOT EXISTS `follows` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `follower_id` INT NOT NULL COMMENT '关注者用户ID（粉丝）',
+    `following_id` INT NOT NULL COMMENT '被关注者用户ID（作者）',
+    `follower_nickname` VARCHAR(50) NOT NULL COMMENT '关注者昵称（冗余）',
+    `following_nickname` VARCHAR(50) NOT NULL COMMENT '被关注者昵称（冗余）',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '关注时间',
+    FOREIGN KEY (`follower_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`following_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    UNIQUE KEY `uk_follower_following` (`follower_id`, `following_id`),
+    INDEX `idx_follower_id` (`follower_id`),
+    INDEX `idx_following_id` (`following_id`),
+    INDEX `idx_follower_created` (`follower_id`, `created_at`),
+    INDEX `idx_following_created` (`following_id`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $all_nicknames = array_unique($all_nicknames);
     if (!empty($all_nicknames)) {
         $placeholders = implode(',', array_fill(0, count($all_nicknames), '?'));
-        $level_sql = "SELECT u.nickname, up.level, up.total_points, lb.badge_icon, lb.badge_color, lb.level_name
+        $level_sql = "SELECT u.id as user_id, u.nickname, up.level, up.total_points, lb.badge_icon, lb.badge_color, lb.level_name
                       FROM users u
                       LEFT JOIN user_points up ON u.id = up.user_id
                       LEFT JOIN level_badges lb ON COALESCE(up.level, 1) = lb.level
@@ -67,6 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $level_result = $level_stmt->get_result();
         while ($lr = $level_result->fetch_assoc()) {
             $user_levels[$lr['nickname']] = [
+                'user_id' => (int)$lr['user_id'],
                 'level' => (int)$lr['level'],
                 'level_name' => $lr['level_name'],
                 'badge_icon' => $lr['badge_icon'],
@@ -76,7 +77,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         }
     }
 
-    $post['author_level'] = $user_levels[$post['author_name']] ?? null;
+    if ($post['author_level'] && isset($post['author_level']['user_id'])) {
+        $post['author_user_id'] = $post['author_level']['user_id'];
+    }
     $post['content_rendered'] = render_mentions_text($post['content'], $conn);
     
     foreach ($comments as &$comment) {

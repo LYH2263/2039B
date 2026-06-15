@@ -95,6 +95,7 @@ export async function renderHeader(activeLink = '') {
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item"><a class="nav-link ${activeLink === 'home' ? 'active' : ''}" href="/">首页</a></li>
+                    <li class="nav-item"><a class="nav-link ${activeLink === 'feed' ? 'active' : ''}" href="/feed.html">动态</a></li>
                     <li class="nav-item"><a class="nav-link ${activeLink === 'stories' ? 'active' : ''}" href="/stories.html">接龙故事</a></li>
                     <li class="nav-item"><a class="nav-link ${activeLink === 'create' ? 'active' : ''}" href="/create_post.html">发布新帖</a></li>
                 </ul>

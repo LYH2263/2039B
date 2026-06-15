@@ -1012,3 +1012,162 @@ textarea::placeholder {
         padding: 0.75rem 1rem;
     }
 }
+
+/* ==================== 关注与动态Feed系统 ==================== */
+
+/* 关注按钮 hover 效果 */
+.follow-btn {
+    font-weight: 500;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.follow-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.follow-btn.btn-secondary:hover:not(:disabled) {
+    background-color: #dc2626;
+    border-color: #dc2626;
+}
+
+.follow-btn.btn-secondary:hover:not(:disabled)::before {
+    content: "取消";
+}
+
+.follow-btn.btn-secondary:hover:not(:disabled) span {
+    display: none;
+}
+
+/* 作者卡片 */
+.author-block {
+    padding: 4px 0;
+}
+
+.author-avatar {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.author-block:hover .author-avatar {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+}
+
+.author-nickname {
+    font-size: 1rem;
+}
+
+.author-info small {
+    line-height: 1.5;
+}
+
+/* 关注统计数字 */
+.follow-stats strong {
+    color: var(--text-main);
+    transition: color 0.2s ease;
+}
+
+.follow-stats:hover strong {
+    color: var(--primary-color);
+}
+
+/* 动态Feed页面帖子卡片 */
+.feed-post-item {
+    border: 1px solid #e5e7eb;
+    border-radius: var(--radius-md);
+    margin-bottom: 1rem;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.feed-post-item:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 8px 24px rgba(79, 70, 229, 0.1);
+    transform: translateY(-2px);
+}
+
+.feed-post-item .post-title {
+    font-size: 1.15rem;
+    line-height: 1.4;
+    transition: color 0.15s ease;
+}
+
+.feed-post-item .post-title:hover {
+    color: var(--primary-hover) !important;
+}
+
+/* 首页帖子条目关注按钮兼容 */
+.post-item {
+    transition: all 0.2s ease;
+}
+
+.post-item:hover {
+    background-color: #fafafa;
+}
+
+/* 帖子详情页作者卡片 */
+.card-header .author-block {
+    padding: 0;
+}
+
+/* 空状态引导卡片 */
+.empty-state-icon {
+    animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* 关注数统计卡片（动态页） */
+.follow-stats-card {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.15);
+}
+
+/* 动态加载骨架屏占位 */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+    border-radius: 4px;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+    .author-block {
+        gap: 0.75rem !important;
+    }
+
+    .author-avatar {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 14px !important;
+    }
+
+    .feed-post-item {
+        padding: 1rem !important;
+    }
+
+    .follow-btn {
+        padding: 0.25rem 0.65rem;
+        font-size: 0.8rem;
+    }
+}
+

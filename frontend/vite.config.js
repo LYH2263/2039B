@@ -20,6 +20,7 @@ export default defineConfig({
         story_detail: resolve(__dirname, 'story_detail.html'),
         messages: resolve(__dirname, 'messages.html'),
         notifications: resolve(__dirname, 'notifications.html'),
+        feed: resolve(__dirname, 'feed.html'),
       }
     }
   }
