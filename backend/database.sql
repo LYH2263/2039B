@@ -268,3 +268,49 @@ CREATE TABLE IF NOT EXISTS `follows` (
     INDEX `idx_follower_created` (`follower_id`, `created_at`),
     INDEX `idx_following_created` (`following_id`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Collections table (合集/专栏主表)
+CREATE TABLE IF NOT EXISTS `collections` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `title` VARCHAR(255) NOT NULL COMMENT '合集标题',
+    `description` TEXT NULL COMMENT '合集简介',
+    `cover_image` VARCHAR(500) NULL COMMENT '封面图片URL',
+    `author_id` INT NOT NULL COMMENT '创建者用户ID',
+    `author_nickname` VARCHAR(50) NOT NULL COMMENT '创建者昵称',
+    `post_count` INT NOT NULL DEFAULT 0 COMMENT '帖子数量（冗余）',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    FOREIGN KEY (`author_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    INDEX `idx_author_id` (`author_id`),
+    INDEX `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Collection posts table (合集-帖子关联表，支持一帖多合集)
+CREATE TABLE IF NOT EXISTS `collection_posts` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `collection_id` INT NOT NULL COMMENT '合集ID',
+    `post_id` INT NOT NULL COMMENT '帖子ID',
+    `sort_order` INT NOT NULL DEFAULT 0 COMMENT '排序序号，值越小越靠前',
+    `added_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '加入时间',
+    FOREIGN KEY (`collection_id`) REFERENCES `collections`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`post_id`) REFERENCES `posts`(`id`) ON DELETE CASCADE,
+    UNIQUE KEY `uk_collection_post` (`collection_id`, `post_id`),
+    INDEX `idx_collection_order` (`collection_id`, `sort_order`),
+    INDEX `idx_post_id` (`post_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DELIMITER //
+
+CREATE TRIGGER IF NOT EXISTS `tr_collection_posts_after_insert` AFTER INSERT ON `collection_posts`
+FOR EACH ROW
+BEGIN
+    UPDATE collections SET post_count = (SELECT COUNT(*) FROM collection_posts WHERE collection_id = NEW.collection_id) WHERE id = NEW.collection_id;
+END//
+
+CREATE TRIGGER IF NOT EXISTS `tr_collection_posts_after_delete` AFTER DELETE ON `collection_posts`
+FOR EACH ROW
+BEGIN
+    UPDATE collections SET post_count = (SELECT COUNT(*) FROM collection_posts WHERE collection_id = OLD.collection_id) WHERE id = OLD.collection_id;
+END//
+
+DELIMITER ;

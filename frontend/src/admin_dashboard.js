@@ -26,7 +26,7 @@ function renderStats(stats) {
         </div>
 
         <div class="row">
-            <div class="col-md-6 mb-4">
+            <div class="col-md-4 mb-4">
                 <div class="card h-100 border-0">
                     <div class="card-body p-4 text-center">
                         <div class="mb-3 text-primary">
@@ -41,7 +41,7 @@ function renderStats(stats) {
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 mb-4">
+            <div class="col-md-4 mb-4">
                 <div class="card h-100 border-0">
                     <div class="card-body p-4 text-center">
                         <div class="mb-3 text-success">
@@ -53,6 +53,18 @@ function renderStats(stats) {
                         <h5 class="card-title text-muted text-uppercase small fw-bold">评论总数</h5>
                         <h1 class="display-4 fw-bold text-dark mb-4">${stats.comment_count}</h1>
                         <a href="/admin/comments.html" class="btn btn-primary w-100">管理评论</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-0">
+                    <div class="card-body p-4 text-center">
+                        <div class="mb-3 text-info">
+                            <i class="bi bi-book" style="font-size: 48px;"></i>
+                        </div>
+                        <h5 class="card-title text-muted text-uppercase small fw-bold">合集总数</h5>
+                        <h1 class="display-4 fw-bold text-dark mb-4">${stats.collection_count || 0}</h1>
+                        <a href="/admin/collections.html" class="btn btn-primary w-100">管理合集</a>
                     </div>
                 </div>
             </div>

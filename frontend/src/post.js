@@ -127,6 +127,8 @@ function renderPost({ post, comments }) {
                     </div>
                 </div>
 
+                ${renderCollectionAffiliation(post)}
+
                 <h4 class="mb-3">评论区 (${comments.length})</h4>
     `;
 
@@ -672,4 +674,30 @@ function cleanupTTS() {
         controlBar.classList.add('d-none');
         document.body.style.paddingBottom = '';
     }
+}
+
+function renderCollectionAffiliation(post) {
+    if (!post.collections || post.collections.length === 0) return '';
+
+    let html = '';
+    post.collections.forEach(col => {
+        html += `
+            <div class="card mb-3 border-primary">
+                <div class="card-body py-2">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-book text-primary"></i>
+                        <span class="text-muted">本文属于</span>
+                        <a href="/collection.html?id=${col.id}" class="fw-bold text-primary text-decoration-none">《${escapeHtml(col.title)}》</a>
+                        <span class="text-muted">合集</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        ${col.prev ? `<a href="/post.html?id=${col.prev.id}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-chevron-left me-1"></i>${escapeHtml(col.prev.title)}</a>` : '<span></span>'}
+                        ${col.next ? `<a href="/post.html?id=${col.next.id}" class="btn btn-outline-secondary btn-sm">${escapeHtml(col.next.title)}<i class="bi bi-chevron-right ms-1"></i></a>` : '<span></span>'}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    return html;
 }

@@ -21,6 +21,10 @@ export default defineConfig({
         messages: resolve(__dirname, 'messages.html'),
         notifications: resolve(__dirname, 'notifications.html'),
         feed: resolve(__dirname, 'feed.html'),
+        collections: resolve(__dirname, 'collections.html'),
+        collection: resolve(__dirname, 'collection.html'),
+        create_collection: resolve(__dirname, 'create_collection.html'),
+        admin_collections: resolve(__dirname, 'admin/collections.html'),
       }
     }
   }

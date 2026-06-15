@@ -97,6 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         }
     }
 
+    $post['author_level'] = $user_levels[$post['author_name']] ?? null;
     if ($post['author_level'] && isset($post['author_level']['user_id'])) {
         $post['author_user_id'] = $post['author_level']['user_id'];
     }
@@ -107,9 +108,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $comment['content_rendered'] = render_mentions_text($comment['content'], $conn);
     }
 
+    $post['collections'] = [];
+    $coll_sql = "SELECT c.id, c.title, cp.sort_order 
+                 FROM collection_posts cp 
+                 JOIN collections c ON cp.collection_id = c.id 
+                 WHERE cp.post_id = ? 
+                 ORDER BY cp.collection_id ASC";
+    $coll_stmt = $conn->prepare($coll_sql);
+    $coll_stmt->bind_param("i", $post_id);
+    $coll_stmt->execute();
+    $coll_result = $coll_stmt->get_result();
+
+    $collection_infos = [];
+    while ($coll_row = $coll_result->fetch_assoc()) {
+        $collection_infos[] = $coll_row;
+    }
+    $coll_stmt->close();
+
+    foreach ($collection_infos as $ci) {
+        $prev_next = getCollectionPrevNext($conn, $ci['id'], $ci['sort_order']);
+        $post['collections'][] = [
+            'id' => (int)$ci['id'],
+            'title' => $ci['title'],
+            'sort_order' => (int)$ci['sort_order'],
+            'prev' => $prev_next['prev'],
+            'next' => $prev_next['next']
+        ];
+    }
+
     jsonResponse([
         'post' => $post,
         'comments' => $comments
     ]);
+}
+
+function getCollectionPrevNext($conn, $collection_id, $current_sort_order) {
+    $prev = null;
+    $next = null;
+
+    $prev_sql = "SELECT p.id, p.title 
+                 FROM collection_posts cp 
+                 JOIN posts p ON cp.post_id = p.id 
+                 WHERE cp.collection_id = ? AND cp.sort_order < ? AND p.status = 'published'
+                 ORDER BY cp.sort_order DESC 
+                 LIMIT 1";
+    $prev_stmt = $conn->prepare($prev_sql);
+    $prev_stmt->bind_param("ii", $collection_id, $current_sort_order);
+    $prev_stmt->execute();
+    $prev_result = $prev_stmt->get_result();
+    if ($prev_row = $prev_result->fetch_assoc()) {
+        $prev = ['id' => (int)$prev_row['id'], 'title' => $prev_row['title']];
+    }
+    $prev_stmt->close();
+
+    $next_sql = "SELECT p.id, p.title 
+                 FROM collection_posts cp 
+                 JOIN posts p ON cp.post_id = p.id 
+                 WHERE cp.collection_id = ? AND cp.sort_order > ? AND p.status = 'published'
+                 ORDER BY cp.sort_order ASC 
+                 LIMIT 1";
+    $next_stmt = $conn->prepare($next_sql);
+    $next_stmt->bind_param("ii", $collection_id, $current_sort_order);
+    $next_stmt->execute();
+    $next_result = $next_stmt->get_result();
+    if ($next_row = $next_result->fetch_assoc()) {
+        $next = ['id' => (int)$next_row['id'], 'title' => $next_row['title']];
+    }
+    $next_stmt->close();
+
+    return ['prev' => $prev, 'next' => $next];
 }
 ?>

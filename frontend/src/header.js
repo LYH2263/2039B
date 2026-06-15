@@ -73,6 +73,7 @@ export async function renderHeader(activeLink = '') {
                     <li><a class="dropdown-item" href="/points.html"><i class="bi bi-star me-2"></i>我的积分</a></li>
                     <li><a class="dropdown-item" href="/notifications.html"><i class="bi bi-bell me-2"></i>我的提醒</a></li>
                     <li><a class="dropdown-item" href="/messages.html"><i class="bi bi-chat-dots me-2"></i>我的私信</a></li>
+                    <li><a class="dropdown-item" href="/collections.html?author_id=${currentUser.id}"><i class="bi bi-book me-2"></i>我的合集</a></li>
                     <li><a class="dropdown-item" href="/stories.html"><i class="bi bi-book me-2"></i>接龙故事</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><button class="dropdown-item text-danger" id="logoutBtn"><i class="bi bi-box-arrow-right me-2"></i>退出登录</button></li>
@@ -96,6 +97,7 @@ export async function renderHeader(activeLink = '') {
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item"><a class="nav-link ${activeLink === 'home' ? 'active' : ''}" href="/">首页</a></li>
                     <li class="nav-item"><a class="nav-link ${activeLink === 'feed' ? 'active' : ''}" href="/feed.html">动态</a></li>
+                    <li class="nav-item"><a class="nav-link ${activeLink === 'collections' ? 'active' : ''}" href="/collections.html">合集</a></li>
                     <li class="nav-item"><a class="nav-link ${activeLink === 'stories' ? 'active' : ''}" href="/stories.html">接龙故事</a></li>
                     <li class="nav-item"><a class="nav-link ${activeLink === 'create' ? 'active' : ''}" href="/create_post.html">发布新帖</a></li>
                 </ul>
