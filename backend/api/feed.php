@@ -24,6 +24,11 @@ check_user_auth();
 $conn = get_db_connection();
 $current_user = get_current_logged_user();
 
+// 惰性检查：发布到期的定时帖子
+publish_due_scheduled_posts($conn);
+
+$status_published = POST_STATUS_PUBLISHED;
+
 $posts_per_page = 10;
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
 if ($page < 1) $page = 1;
@@ -57,12 +62,13 @@ $count_sql = "SELECT COUNT(*) as cnt
               FROM posts p
               INNER JOIN follows f ON f.following_id = (
                   SELECT u.id FROM users u WHERE u.nickname = p.author_name LIMIT 1
-              ) AND f.follower_id = ?";
+              ) AND f.follower_id = ?
+              WHERE p.status = ?";
 $count_stmt = $conn->prepare($count_sql);
-$count_stmt->bind_param("i", $current_user['id']);
+$count_stmt->bind_param("is", $current_user['id'], $status_published);
 $count_stmt->execute();
 $total_posts = (int)$count_stmt->get_result()->fetch_assoc()['cnt'];
-$total_pages = ceil($total_posts / $posts_per_page);
+$total_pages = $total_posts > 0 ? ceil($total_posts / $posts_per_page) : 0;
 
 if ($total_posts === 0) {
     jsonResponse([
@@ -83,14 +89,14 @@ $posts_sql = "SELECT p.*,
                      u.id as author_user_id
               FROM posts p
               LEFT JOIN users u ON u.nickname = p.author_name
-              WHERE EXISTS (
+              WHERE p.status = ? AND EXISTS (
                   SELECT 1 FROM follows f
                   WHERE f.follower_id = ? AND f.following_id = u.id
               )
-              ORDER BY p.created_at DESC
+              ORDER BY COALESCE(p.published_at, p.created_at) DESC
               LIMIT ?, ?";
 $posts_stmt = $conn->prepare($posts_sql);
-$posts_stmt->bind_param("iii", $current_user['id'], $offset, $posts_per_page);
+$posts_stmt->bind_param("siii", $status_published, $current_user['id'], $offset, $posts_per_page);
 $posts_stmt->execute();
 $posts_result = $posts_stmt->get_result();
 

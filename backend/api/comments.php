@@ -20,6 +20,9 @@ require_once '../point_helper.php';
 $conn = get_db_connection();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // 惰性检查：发布到期的定时帖子，保证状态最新
+    publish_due_scheduled_posts($conn);
+
     $input = json_decode(file_get_contents('php://input'), true);
     $post_id = isset($input['post_id']) ? (int)$input['post_id'] : 0;
     $nickname = trim($input['nickname'] ?? '');
@@ -27,6 +30,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($post_id <= 0 || empty($nickname) || empty($content)) {
         jsonResponse(['error' => 'Invalid input'], 400);
+    }
+
+    // 校验帖子是否存在且已发布
+    $status_published = POST_STATUS_PUBLISHED;
+    $post_check_stmt = $conn->prepare("SELECT id, status FROM posts WHERE id = ?");
+    $post_check_stmt->bind_param("i", $post_id);
+    $post_check_stmt->execute();
+    $post_check_result = $post_check_stmt->get_result();
+    if ($post_check_result->num_rows === 0) {
+        $post_check_stmt->close();
+        jsonResponse(['error' => '帖子不存在'], 404);
+    }
+    $post_check = $post_check_result->fetch_assoc();
+    $post_check_stmt->close();
+    if ($post_check['status'] !== $status_published) {
+        jsonResponse(['error' => '暂未发布的帖子不能被评论'], 400);
     }
 
     $current_user = get_current_logged_user();

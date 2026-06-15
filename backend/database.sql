@@ -10,7 +10,13 @@ CREATE TABLE IF NOT EXISTS `posts` (
     `title` VARCHAR(255) NOT NULL COMMENT '帖子标题',
     `content` TEXT NOT NULL COMMENT '帖子内容',
     `author_name` VARCHAR(100) NOT NULL COMMENT '作者昵称',
-    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '发布时间'
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'published' COMMENT '状态：scheduled-待发布，published-已发布',
+    `scheduled_at` DATETIME NULL COMMENT '计划发布时间（NULL表示无需定时）',
+    `published_at` DATETIME NULL COMMENT '实际发布时间',
+    INDEX `idx_status` (`status`),
+    INDEX `idx_scheduled_at` (`scheduled_at`),
+    INDEX `idx_status_scheduled` (`status`, `scheduled_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Comments table
@@ -24,9 +30,9 @@ CREATE TABLE IF NOT EXISTS `comments` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Optional: Insert some sample data
-INSERT INTO `posts` (`title`, `content`, `author_name`, `created_at`) VALUES
-('欢迎来到极简论坛', '这是一个基于 PHP + MySQL 的轻量级论坛系统。', '管理员', NOW()),
-('测试帖子', '这是一条测试内容，用于验证系统功能。', '测试员', NOW());
+INSERT INTO `posts` (`title`, `content`, `author_name`, `created_at`, `status`, `scheduled_at`, `published_at`) VALUES
+('欢迎来到极简论坛', '这是一个基于 PHP + MySQL 的轻量级论坛系统。', '管理员', NOW(), 'published', NULL, NOW()),
+('测试帖子', '这是一条测试内容，用于验证系统功能。', '测试员', NOW(), 'published', NULL, NOW());
 
 INSERT INTO `comments` (`post_id`, `author_name`, `content`, `created_at`) VALUES
 (1, '访客A', '界面很简洁，不错！', NOW()),
