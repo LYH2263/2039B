@@ -299,15 +299,20 @@ CREATE TABLE IF NOT EXISTS `collection_posts` (
     INDEX `idx_post_id` (`post_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 注意：MySQL 5.7 不支持 CREATE TRIGGER IF NOT EXISTS（该语法在 MySQL 8.0.29+ 才支持）
+-- 因此使用 DROP TRIGGER IF EXISTS + CREATE TRIGGER 保证可重复执行（幂等）
+DROP TRIGGER IF EXISTS `tr_collection_posts_after_insert`;
+DROP TRIGGER IF EXISTS `tr_collection_posts_after_delete`;
+
 DELIMITER //
 
-CREATE TRIGGER IF NOT EXISTS `tr_collection_posts_after_insert` AFTER INSERT ON `collection_posts`
+CREATE TRIGGER `tr_collection_posts_after_insert` AFTER INSERT ON `collection_posts`
 FOR EACH ROW
 BEGIN
     UPDATE collections SET post_count = (SELECT COUNT(*) FROM collection_posts WHERE collection_id = NEW.collection_id) WHERE id = NEW.collection_id;
 END//
 
-CREATE TRIGGER IF NOT EXISTS `tr_collection_posts_after_delete` AFTER DELETE ON `collection_posts`
+CREATE TRIGGER `tr_collection_posts_after_delete` AFTER DELETE ON `collection_posts`
 FOR EACH ROW
 BEGIN
     UPDATE collections SET post_count = (SELECT COUNT(*) FROM collection_posts WHERE collection_id = OLD.collection_id) WHERE id = OLD.collection_id;
